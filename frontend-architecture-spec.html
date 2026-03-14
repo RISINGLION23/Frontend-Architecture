@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frontend Architecture Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;400;500;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080a0f;
+  --bg2: #0e1118;
+  --bg3: #141720;
+  --bg4: #1c2030;
+  --border: #1e2535;
+  --border2: #2a3448;
+  --text: #c8d0e8;
+  --text2: #7a8aaa;
+  --text3: #4a5570;
+  --accent: #f0a500;
+  --accent2: #ffcc55;
+  --accent-dim: rgba(240,165,0,0.12);
+  --blue: #4d9fff;
+  --blue-dim: rgba(77,159,255,0.12);
+  --green: #3ddc84;
+  --green-dim: rgba(61,220,132,0.10);
+  --red: #ff5f7a;
+  --red-dim: rgba(255,95,122,0.10);
+  --purple: #b48eff;
+  --purple-dim: rgba(180,142,255,0.10);
+  --teal: #3dd9d6;
+  --mono: 'Martian Mono', monospace;
+  --display: 'Syne', sans-serif;
+  --sidebar-w: 260px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.7;display:flex;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;background:var(--bg2);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100;
+}
+.sidebar-logo{
+  padding:24px 20px 20px;
+  border-bottom:1px solid var(--border);
+}
+.logo-tag{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+.logo-title{font-family:var(--display);font-size:18px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1.2;}
+.logo-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+
+.nav-section{padding:16px 12px 4px;}
+.nav-section-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);padding:0 8px;margin-bottom:6px;}
+.nav-link{
+  display:flex;align-items:center;gap:10px;
+  padding:7px 10px;border-radius:6px;
+  font-size:11px;font-weight:400;color:var(--text2);
+  text-decoration:none;cursor:pointer;
+  transition:all .15s;border:none;background:none;width:100%;text-align:left;
+}
+.nav-link:hover{background:var(--bg3);color:var(--text);}
+.nav-link.active{background:var(--accent-dim);color:var(--accent);}
+.nav-num{
+  width:18px;height:18px;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;flex-shrink:0;
+  background:var(--bg4);color:var(--text3);
+}
+.nav-link.active .nav-num{background:var(--accent);color:#000;}
+
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border);}
+.sidebar-footer-text{font-size:10px;color:var(--text3);line-height:1.6;}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;}
+
+/* ── SECTION ── */
+.section{
+  min-height:100vh;padding:48px 56px 80px;
+  border-bottom:1px solid var(--border);
+  display:none;
+}
+.section.active{display:block;}
+
+.section-header{margin-bottom:40px;}
+.section-num{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
+.section-title{
+  font-family:var(--display);font-size:36px;font-weight:800;
+  color:#fff;letter-spacing:-.03em;line-height:1.1;margin-bottom:12px;
+}
+.section-desc{font-size:13px;color:var(--text2);max-width:680px;line-height:1.8;}
+
+/* ── TABS ── */
+.tab-bar{display:flex;gap:2px;margin-bottom:28px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:4px;width:fit-content;}
+.tab-btn{
+  padding:6px 16px;border-radius:5px;font-size:11px;font-weight:500;
+  color:var(--text3);cursor:pointer;border:none;background:none;
+  font-family:var(--mono);transition:all .15s;
+}
+.tab-btn.active{background:var(--bg4);color:var(--text);border:1px solid var(--border2);}
+.tab-btn:hover:not(.active){color:var(--text2);}
+
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── CARDS ── */
+.card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;margin-bottom:16px;overflow:hidden;
+}
+.card-header{
+  padding:12px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.card-header-title{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;}
+.card-body{padding:20px;}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+
+/* ── STATE MACHINE ── */
+.state-machine{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;padding:24px;font-family:var(--mono);
+  font-size:11px;line-height:1.9;overflow-x:auto;
+}
+.sm-title{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;}
+.sm-state{color:var(--accent2);}
+.sm-arrow{color:var(--text3);}
+.sm-event{color:var(--blue);}
+.sm-guard{color:var(--purple);}
+.sm-action{color:var(--green);}
+.sm-comment{color:var(--text3);}
+.sm-error{color:var(--red);}
+
+/* ── CODE BLOCKS ── */
+.code-block{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;overflow:hidden;
+}
+.code-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 16px;border-bottom:1px solid var(--border);
+  background:var(--bg2);
+}
+.code-lang{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);}
+.code-copy{font-size:10px;color:var(--text3);cursor:pointer;background:none;border:none;font-family:var(--mono);transition:color .15s;}
+.code-copy:hover{color:var(--accent);}
+.code-inner{padding:20px;overflow-x:auto;font-size:12px;line-height:1.8;}
+
+/* syntax */
+.kw{color:#ff7eb3;}.type{color:var(--teal);}.fn{color:var(--blue);}
+.str{color:var(--green);}.num{color:var(--accent2);}.cmt{color:var(--text3);}
+.dec{color:var(--purple);}.prop{color:#88c9ff;}.tag{color:#ff7eb3;}
+.attr{color:var(--accent2);}.bool{color:var(--accent);}
+
+/* ── FLOW DIAGRAM ── */
+.flow{display:flex;flex-direction:column;gap:0;}
+.flow-row{display:flex;align-items:stretch;gap:0;}
+.flow-node{
+  padding:8px 16px;border-radius:6px;font-size:11px;font-weight:500;
+  display:flex;align-items:center;gap:8px;
+  white-space:nowrap;
+}
+.flow-node-component{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(77,159,255,.25);}
+.flow-node-store{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(180,142,255,.25);}
+.flow-node-api{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(240,165,0,.25);}
+.flow-node-hook{background:var(--green-dim);color:var(--green);border:1px solid rgba(61,220,132,.25);}
+.flow-node-error{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,95,122,.25);}
+.flow-arrow{color:var(--text3);font-size:11px;padding:0 8px;display:flex;align-items:center;}
+.flow-label{font-size:10px;color:var(--text3);padding:2px 8px;}
+.flow-connector{width:1px;background:var(--border2);margin:0 auto;height:12px;}
+
+/* ── PROP TABLE ── */
+.prop-table{width:100%;border-collapse:collapse;font-size:11px;}
+.prop-table th{
+  padding:8px 12px;text-align:left;font-size:9px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--text3);
+  border-bottom:1px solid var(--border);
+}
+.prop-table td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+.prop-table tr:last-child td{border-bottom:none;}
+.prop-table tr:hover td{background:var(--bg3);}
+.prop-name{color:var(--blue);font-weight:500;}
+.prop-type{color:var(--purple);}
+.prop-required{color:var(--red);font-size:9px;}
+.prop-optional{color:var(--text3);font-size:9px;}
+.prop-desc{color:var(--text2);}
+
+/* ── EDGE CASES ── */
+.edge-list{display:flex;flex-direction:column;gap:8px;}
+.edge-item{
+  display:flex;gap:12px;padding:12px 16px;
+  background:var(--bg);border:1px solid var(--border);border-radius:6px;
+}
+.edge-badge{
+  font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:2px 8px;border-radius:4px;white-space:nowrap;height:fit-content;flex-shrink:0;
+}
+.edge-warn{background:rgba(240,165,0,.15);color:var(--accent);}
+.edge-err{background:var(--red-dim);color:var(--red);}
+.edge-ux{background:var(--blue-dim);color:var(--blue);}
+.edge-sec{background:var(--purple-dim);color:var(--purple);}
+.edge-perf{background:var(--green-dim);color:var(--green);}
+.edge-text{font-size:11px;color:var(--text2);line-height:1.6;}
+.edge-text strong{color:var(--text);font-weight:500;}
+
+/* ── STATE BADGES ── */
+.states-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;}
+.state-badge{
+  padding:10px 12px;border-radius:6px;border:1px solid;
+}
+.state-badge-name{font-size:10px;font-weight:700;margin-bottom:3px;}
+.state-badge-desc{font-size:10px;line-height:1.5;}
+.s-idle{background:var(--bg);border-color:var(--border);color:var(--text2);}
+.s-idle .state-badge-name{color:var(--text);}
+.s-loading{background:var(--accent-dim);border-color:rgba(240,165,0,.3);}
+.s-loading .state-badge-name{color:var(--accent);}
+.s-loading .state-badge-desc{color:var(--text2);}
+.s-success{background:var(--green-dim);border-color:rgba(61,220,132,.3);}
+.s-success .state-badge-name{color:var(--green);}
+.s-success .state-badge-desc{color:var(--text2);}
+.s-error{background:var(--red-dim);border-color:rgba(255,95,122,.3);}
+.s-error .state-badge-name{color:var(--red);}
+.s-error .state-badge-desc{color:var(--text2);}
+.s-empty{background:var(--blue-dim);border-color:rgba(77,159,255,.3);}
+.s-empty .state-badge-name{color:var(--blue);}
+.s-empty .state-badge-desc{color:var(--text2);}
+.s-partial{background:var(--purple-dim);border-color:rgba(180,142,255,.3);}
+.s-partial .state-badge-name{color:var(--purple);}
+.s-partial .state-badge-desc{color:var(--text2);}
+
+/* ── REACT TREE ── */
+.tree{font-size:11px;line-height:2;color:var(--text2);}
+.tree-comp{color:var(--blue);}
+.tree-hook{color:var(--green);}
+.tree-ctx{color:var(--purple);}
+.tree-file{color:var(--text3);font-size:10px;}
+
+/* ── MISC ── */
+.tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.tag-pill{font-size:10px;padding:3px 10px;border-radius:4px;font-weight:500;}
+.tp-blue{background:var(--blue-dim);color:var(--blue);}
+.tp-green{background:var(--green-dim);color:var(--green);}
+.tp-amber{background:var(--accent-dim);color:var(--accent);}
+.tp-purple{background:var(--purple-dim);color:var(--purple);}
+.tp-red{background:var(--red-dim);color:var(--red);}
+
+h3{font-family:var(--display);font-size:16px;font-weight:700;color:#fff;margin-bottom:12px;letter-spacing:-.02em;}
+h4{font-size:11px;font-weight:700;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em;}
+p{font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:12px;}
+pre{font-family:var(--mono);}
+
+/* OVERVIEW SECTION */
+.overview-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:32px;}
+.overview-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:20px 16px;cursor:pointer;
+  transition:all .2s;
+}
+.overview-card:hover{border-color:var(--border2);background:var(--bg3);}
+.overview-card.active{border-color:rgba(240,165,0,.4);background:var(--accent-dim);}
+.ov-num{font-size:28px;font-weight:800;font-family:var(--display);color:var(--border2);margin-bottom:8px;transition:color .2s;}
+.overview-card.active .ov-num{color:var(--accent);}
+.ov-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.ov-sub{font-size:10px;color:var(--text3);}
+
+.complexity-bar{height:3px;border-radius:2px;background:var(--bg4);margin-top:10px;overflow:hidden;}
+.complexity-fill{height:100%;border-radius:2px;background:var(--accent);}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-tag">Frontend Architect</div>
+    <div class="logo-title">Component<br>Architecture</div>
+    <div class="logo-sub">5 systems · React · TypeScript</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Overview</div>
+    <button class="nav-link active" onclick="showSection('overview')">
+      <span class="nav-num">★</span> System Overview
+    </button>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Components</div>
+    <button class="nav-link" onclick="showSection('form')">
+      <span class="nav-num">01</span> Multi-step Form
+    </button>
+    <button class="nav-link" onclick="showSection('pricing')">
+      <span class="nav-num">02</span> Pricing Calculator
+    </button>
+    <button class="nav-link" onclick="showSection('search')">
+      <span class="nav-num">03</span> Search + Filters
+    </button>
+    <button class="nav-link" onclick="showSection('dashboard')">
+      <span class="nav-num">04</span> User Dashboard
+    </button>
+    <button class="nav-link" onclick="showSection('auth')">
+      <span class="nav-num">05</span> Auth Flow
+    </button>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-footer-text">
+      State machines · Data flow<br>
+      Error handling · Edge cases<br>
+      React structure output
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ════════════════════════════════════════════════════
+     OVERVIEW
+════════════════════════════════════════════════════ -->
+<div class="section active" id="s-overview">
+  <div class="section-header">
+    <div class="section-num">Frontend Architecture Spec · v1.0</div>
+    <h1 class="section-title">Five systems.<br>Complete architecture.</h1>
+    <p class="section-desc">Every component specified with state machines, data flow diagrams, error handling strategy, loading/empty states, edge case catalogue, and production-ready React structure. Click any component to dive in.</p>
+  </div>
+
+  <div class="overview-grid">
+    <div class="overview-card" onclick="showSection('form')">
+      <div class="ov-num">01</div>
+      <div class="ov-title">Multi-step Form</div>
+      <div class="ov-sub">Wizard · Validation · Progress</div>
+      <div class="complexity-bar"><div class="complexity-fill" style="width:80%;"></div></div>
+    </div>
+    <div class="overview-card" onclick="showSection('pricing')">
+      <div class="ov-num">02</div>
+      <div class="ov-title">Pricing Calculator</div>
+      <div class="ov-sub">Real-time · Dynamic · Debounced</div>
+      <div class="complexity-bar"><div class="complexity-fill" style="width:60%;"></div></div>
+    </div>
+    <div class="overview-card" onclick="showSection('search')">
+      <div class="ov-num">03</div>
+      <div class="ov-title">Search + Filters</div>
+      <div class="ov-sub">Faceted · Sort · Pagination</div>
+      <div class="complexity-bar"><div class="complexity-fill" style="width:90%;"></div></div>
+    </div>
+    <div class="overview-card" onclick="showSection('dashboard')">
+      <div class="ov-num">04</div>
+      <div class="ov-title">User Dashboard</div>
+      <div class="ov-sub">Viz · CRUD · Optimistic UI</div>
+      <div class="complexity-bar"><div class="complexity-fill" style="width:95%;"></div></div>
+    </div>
+    <div class="overview-card" onclick="showSection('auth')">
+      <div class="ov-num">05</div>
+      <div class="ov-title">Auth Flow</div>
+      <div class="ov-sub">Login · Signup · Reset</div>
+      <div class="complexity-bar"><div class="complexity-fill" style="width:75%;"></div></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-header"><span class="card-header-title">Shared Principles</span></div>
+      <div class="card-body">
+        <div class="edge-list">
+          <div class="edge-item"><span class="edge-badge edge-ux">Pattern</span><span class="edge-text"><strong>Optimistic UI first</strong> — update local state immediately, rollback on API error. Never block the user waiting for a network round-trip.</span></div>
+          <div class="edge-item"><span class="edge-badge edge-perf">Perf</span><span class="edge-text"><strong>URL as source of truth</strong> — filters, pagination, search query all live in URL params. Deep-linkable, shareable, back-button safe.</span></div>
+          <div class="edge-item"><span class="edge-badge edge-sec">Security</span><span class="edge-text"><strong>Never trust the client</strong> — validate on both sides. Client validation for UX speed, server validation for integrity.</span></div>
+          <div class="edge-item"><span class="edge-badge edge-err">Error</span><span class="edge-text"><strong>Error boundaries at every boundary</strong> — wrap each major section so one widget crash can't destroy the whole page.</span></div>
+          <div class="edge-item"><span class="edge-badge edge-warn">State</span><span class="edge-text"><strong>Finite state machines</strong> — every async operation has exactly: idle → loading → success | error. No boolean soup.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-header-title">Tech Stack Assumptions</span></div>
+      <div class="card-body">
+        <div class="edge-list">
+          <div class="edge-item"><span class="edge-badge edge-ux">Framework</span><span class="edge-text"><strong>React 18</strong> + TypeScript 5. Concurrent features (useTransition, useDeferredValue) used where applicable.</span></div>
+          <div class="edge-item"><span class="edge-badge edge-ux">Data</span><span class="edge-text"><strong>TanStack Query v5</strong> for server state. Zustand for ephemeral client state. No Redux.</span></div>
+          <div class="edge-item"><span class="edge-badge edge-perf">Forms</span><span class="edge-text"><strong>React Hook Form + Zod</strong> for validation. Uncontrolled inputs, schema-driven error messages.</span></div>
+          <div class="edge-item"><span class="edge-badge edge-sec">Auth</span><span class="edge-text"><strong>HTTP-only cookies</strong> for tokens. No localStorage. Refresh token rotation. PKCE for OAuth.</span></div>
+          <div class="edge-item"><span class="edge-badge edge-perf">Router</span><span class="edge-text"><strong>TanStack Router</strong> (type-safe) or Next.js App Router. URL state via nuqs.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     01 — MULTI-STEP FORM
+════════════════════════════════════════════════════ -->
+<div class="section" id="s-form">
+  <div class="section-header">
+    <div class="section-num">Component 01</div>
+    <h1 class="section-title">Multi-step Form</h1>
+    <p class="section-desc">Wizard-pattern form with per-step validation, progress tracking, persistent draft state, and graceful recovery from network failures at submission.</p>
+    <div class="tag-row">
+      <span class="tag-pill tp-blue">useReducer</span>
+      <span class="tag-pill tp-green">React Hook Form</span>
+      <span class="tag-pill tp-amber">Zod</span>
+      <span class="tag-pill tp-purple">sessionStorage draft</span>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(event,'form','machine')">State machine</button>
+    <button class="tab-btn" onclick="switchTab(event,'form','data')">Data flow</button>
+    <button class="tab-btn" onclick="switchTab(event,'form','errors')">Error handling</button>
+    <button class="tab-btn" onclick="switchTab(event,'form','states')">UI states</button>
+    <button class="tab-btn" onclick="switchTab(event,'form','edges')">Edge cases</button>
+    <button class="tab-btn" onclick="switchTab(event,'form','code')">React structure</button>
+  </div>
+
+  <!-- STATE MACHINE -->
+  <div class="tab-panel active" id="form-machine">
+    <div class="card">
+      <div class="card-header"><span class="card-header-title">Form wizard state machine</span></div>
+      <div class="card-body">
+        <div class="state-machine">
+<div class="sm-title">STATES × TRANSITIONS × ACTIONS</div>
+<pre>
+<span class="sm-comment">┌─────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="sm-comment">│                     MULTI-STEP FORM STATE MACHINE                          │</span>
+<span class="sm-comment">└─────────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="sm-state">IDLE</span>
+  <span class="sm-arrow">│</span>  <span class="sm-comment">// Initial — load draft from sessionStorage if present</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">LOAD_DRAFT</span><span class="sm-arrow">]──────────────→</span> <span class="sm-state">STEP_1_ACTIVE</span>  <span class="sm-action">! hydrateDraft()</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">INIT_FRESH</span><span class="sm-arrow">]──────────────→</span> <span class="sm-state">STEP_1_ACTIVE</span>  <span class="sm-action">! clearDraft()</span>
+
+<span class="sm-state">STEP_N_ACTIVE</span>  <span class="sm-comment">// N ∈ {1..maxSteps}</span>
+  <span class="sm-arrow">│</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">FIELD_CHANGE</span><span class="sm-arrow">]─────────────→</span> <span class="sm-state">STEP_N_ACTIVE</span>  <span class="sm-action">! updateField(name,val) ! saveDraft()</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">FIELD_BLUR</span><span class="sm-arrow">]───────────────→</span> <span class="sm-state">STEP_N_ACTIVE</span>  <span class="sm-action">! validateField(name)</span>
+  <span class="sm-arrow">│</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">NEXT</span><span class="sm-arrow">] <span class="sm-guard">[guard: stepValid]</span> ──→</span> <span class="sm-state">STEP_N_VALIDATING</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">NEXT</span><span class="sm-arrow">] <span class="sm-guard">[guard: !stepValid]</span> ─→</span> <span class="sm-state">STEP_N_ACTIVE</span>   <span class="sm-action">! showFieldErrors()</span>
+  <span class="sm-arrow">│</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">BACK</span><span class="sm-arrow">] <span class="sm-guard">[guard: N > 1]</span> ──────→</span> <span class="sm-state">STEP_N-1_ACTIVE</span> <span class="sm-action">! preserveValues()</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">JUMP_TO</span><span class="sm-arrow">] <span class="sm-guard">[guard: visited]</span> ──→</span> <span class="sm-state">STEP_M_ACTIVE</span>   <span class="sm-action">! setCurrentStep(M)</span>
+
+<span class="sm-state">STEP_N_VALIDATING</span>  <span class="sm-comment">// async step-level validation (e.g. email uniqueness check)</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">VALIDATE_OK</span><span class="sm-arrow">]────────────→</span> <span class="sm-state">STEP_N+1_ACTIVE</span>  <span class="sm-action">! markStepComplete(N)</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">VALIDATE_FAIL</span><span class="sm-arrow">]──────────→</span> <span class="sm-state">STEP_N_ACTIVE</span>    <span class="sm-action">! setServerErrors(errs)</span>
+
+<span class="sm-state">REVIEW</span>  <span class="sm-comment">// Final summary step — all values read-only</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">EDIT_STEP</span><span class="sm-arrow">]──────────────→</span> <span class="sm-state">STEP_N_ACTIVE</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">SUBMIT</span><span class="sm-arrow">]─────────────────→</span> <span class="sm-state">SUBMITTING</span>
+
+<span class="sm-state">SUBMITTING</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">SUCCESS</span><span class="sm-arrow">]────────────────→</span> <span class="sm-state">COMPLETE</span>  <span class="sm-action">! clearDraft() ! onSuccess()</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">ERROR</span><span class="sm-arrow">]──────────────────→</span> <span class="sm-state">SUBMIT_ERROR</span>
+
+<span class="sm-state">SUBMIT_ERROR</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">RETRY</span><span class="sm-arrow">]──────────────────→</span> <span class="sm-state">SUBMITTING</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">EDIT</span><span class="sm-arrow">]───────────────────→</span> <span class="sm-state">REVIEW</span>
+
+<span class="sm-state">COMPLETE</span>  <span class="sm-comment">// Terminal — show success, redirect after delay</span>
+</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-header"><span class="card-header-title">Step validation model</span></div>
+        <div class="card-body">
+          <div class="state-machine" style="font-size:10px;">
+<pre>
+<span class="sm-comment">// Per-field validation layers</span>
+
+Layer 1: <span class="sm-action">Inline Zod schema</span>
+  onChange → parse field value
+  onBlur   → mark field as touched
+  Display error only if touched
+
+Layer 2: <span class="sm-action">Step schema validation</span>
+  On NEXT click → parse full step
+  Collect ALL errors at once
+  Scroll to first error
+
+Layer 3: <span class="sm-action">Async cross-field checks</span>
+  After local validation passes
+  e.g. email uniqueness, slug exists
+  Debounced 400ms on change
+
+Layer 4: <span class="sm-action">Server validation on submit</span>
+  Map 422 field errors → RHF errors
+  setError('fieldName', {message})
+  Jump to offending step if needed
+</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-header-title">Progress state model</span></div>
+        <div class="card-body">
+          <div class="state-machine" style="font-size:10px;">
+<pre>
+<span class="sm-comment">// StepStatus per step index</span>
+
+type StepStatus =
+  | <span class="sm-state">'upcoming'</span>    <span class="sm-comment">// not yet reached</span>
+  | <span class="sm-state">'active'</span>      <span class="sm-comment">// currently on this step</span>
+  | <span class="sm-state">'complete'</span>    <span class="sm-comment">// passed with valid data</span>
+  | <span class="sm-state">'error'</span>       <span class="sm-comment">// visited + has errors</span>
+  | <span class="sm-state">'skipped'</span>     <span class="sm-comment">// conditional step skipped</span>
+
+<span class="sm-comment">// Progress indicator renders from this array</span>
+<span class="sm-comment">// Click on 'complete' or 'error' steps → jump</span>
+<span class="sm-comment">// Click on 'upcoming' → blocked (no skipping)</span>
+
+<span class="sm-comment">// Percent: complete / total (excl skipped)</span>
+</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATA FLOW -->
+  <div class="tab-panel" id="form-data">
+    <div class="card">
+      <div class="card-header"><span class="card-header-title">Props & data flow</span></div>
+      <div class="card-body">
+        <table class="prop-table">
+          <thead><tr><th>Prop / Event</th><th>Type</th><th>Dir</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="prop-name">steps</span> <span class="prop-required">required</span></td><td><span class="prop-type">StepConfig[]</span></td><td><span style="color:var(--blue)">↓ prop</span></td><td class="prop-desc">Array defining each step: id, title, schema, component, conditions</td></tr>
+            <tr><td><span class="prop-name">initialValues</span></td><td><span class="prop-type">Partial&lt;FormData&gt;</span></td><td><span style="color:var(--blue)">↓ prop</span></td><td class="prop-desc">Pre-fill values (edit mode, draft restore)</td></tr>
+            <tr><td><span class="prop-name">onSubmit</span> <span class="prop-required">required</span></td><td><span class="prop-type">(data: FormData) =&gt; Promise&lt;void&gt;</span></td><td><span style="color:var(--green)">↑ event</span></td><td class="prop-desc">Called with validated full form data on final submit</td></tr>
+            <tr><td><span class="prop-name">onStepChange</span></td><td><span class="prop-type">(step: number) =&gt; void</span></td><td><span style="color:var(--green)">↑ event</span></td><td class="prop-desc">Fired on every step change — for analytics, URL sync</td></tr>
+            <tr><td><span class="prop-name">onDraftSave</span></td><td><span class="prop-type">(data: Partial&lt;FormData&gt;) =&gt; void</span></td><td><span style="color:var(--green)">↑ event</span></td><td class="prop-desc">Fired 500ms after any field change — parent can persist to server</td></tr>
+            <tr><td><span class="prop-name">persistKey</span></td><td><span class="prop-type">string</span></td><td><span style="color:var(--blue)">↓ prop</span></td><td class="prop-desc">sessionStorage key for auto-draft. Omit to disable persistence</td></tr>
+            <tr><td><span class="prop-name">validateOnStep</span></td><td><span class="prop-type">(step, data) =&gt; Promise&lt;Errors&gt;</span></td><td><span style="color:var(--blue)">↓ prop</span></td><td class="prop-desc">Optional async per-step validation (email check, slug availability)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-header-title">Internal data flow</span></div>
+      <div class="card-body">
+        <div class="state-machine" style="font-size:10px;line-height:2;">
+<pre>
+<span class="sm-comment">User types in field</span>
+       │
+       ▼
+<span class="sm-action">useFormContext().register('field')</span>     <span class="sm-comment">// RHF uncontrolled</span>
+       │
+       ├──onChange──→ <span class="sm-action">formReducer(FIELD_CHANGE)</span>
+       │               └──→ <span class="sm-action">sessionStorage.setItem(draftKey, JSON)</span>  <span class="sm-comment">debounced 500ms</span>
+       │               └──→ <span class="sm-action">onDraftSave?.() callback</span>
+       │
+       └──onBlur───→ <span class="sm-action">trigger('field')</span>  <span class="sm-comment">// RHF validate single field</span>
+                      └──→ <span class="sm-action">zodResolver</span> evaluates field
+                      └──→ <span class="sm-action">formState.errors updated</span>
+                      └──→ <span class="sm-action">FieldError renders if touched</span>
+
+<span class="sm-comment">User clicks NEXT</span>
+       │
+       ▼
+<span class="sm-action">trigger(stepFields)</span>  <span class="sm-comment">// validate all fields in current step</span>
+       │
+       ├──INVALID──→ <span class="sm-action">showAllErrors()</span> + <span class="sm-action">scrollToFirstError()</span>
+       │
+       └──VALID────→ <span class="sm-action">validateOnStep?.(step, data)</span>  <span class="sm-comment">async server check</span>
+                      ├──ERROR──→ <span class="sm-action">setError('field', serverMsg)</span>
+                      └──OK─────→ <span class="sm-action">dispatch(NEXT)</span> → next step renders
+</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ERROR HANDLING -->
+  <div class="tab-panel" id="form-errors">
+    <div class="grid2">
+      <div class="card">
+        <div class="card-header"><span class="card-header-title">Error classification</span></div>
+        <div class="card-body">
+          <div class="edge-list">
+            <div class="edge-item"><span class="edge-badge edge-warn">Field</span><span class="edge-text"><strong>Inline validation errors</strong> — displayed beneath field, only after field is touched. Never show errors on a pristine field. Clear on fix.</span></div>
+            <div class="edge-item"><span class="edge-badge edge-warn">Step</span><span class="edge-text"><strong>Step summary errors</strong> — shown in banner at top of step when NEXT is clicked and multiple fields are invalid. List all errors.</span></div>
+            <div class="edge-item"><span class="edge-badge edge-err">Async</span><span class="edge-text"><strong>Server validation errors</strong> (422) — map field paths from API response to RHF setError(). Jump back to offending step if on review screen.</span></div>
+            <div class="edge-item"><span class="edge-badge edge-err">Network</span><span class="edge-text"><strong>Submit network failure</strong> — show retry UI, preserve all form data. Never lose user input on a transient error.</span></div>
+            <div class="edge-item"><span class="edge-badge edge-sec">Session</span><span class="edge-text"><strong>Session expired mid-form</strong> — intercept 401, redirect to login with return URL, restore draft on return via persistKey.</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-header-title">Error message strategy</span></div>
+        <div class="card-body">
+          <div class="state-machine" style="font-size:10px;line-height:1.9;">
+<pre>
+<span class="sm-comment">// Error message hierarchy (first match wins)</span>
+
+1. <span class="sm-action">Server error</span> for field (from 422 response)
+   Highest trust — server has final say
+
+2. <span class="sm-action">Zod custom message</span>
+   z.string().email('Use a valid email')
+
+3. <span class="sm-action">Zod default message</span>
+   'Invalid email' — override via errorMap
+
+4. <span class="sm-action">Field-level i18n key</span>
+   t('form.email.required')
+
+<span class="sm-comment">// Error message rules:</span>
+- Never say "Required" — say what IS needed
+- Never expose internal codes to users
+- Include what format IS valid: "Use MM/DD/YYYY"
+- Async errors: show spinner first, error after
+- Field errors clear on corrected input
+</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UI STATES -->
+  <div class="tab-panel" id="form-states">
+    <div class="states-grid">
+      <div class="state-badge s-idle"><div class="state-badge-name">IDLE</div><div class="state-badge-desc">Empty form, no interaction yet</div></div>
+      <div class="state-badge s-partial"><div class="state-badge-name">DRAFT_RESTORED</div><div class="state-badge-desc">Loaded from sessionStorage</div></div>
+      <div class="state-badge s-idle"><div class="state-badge-name">STEP_ACTIVE</div><div class="state-badge-desc">Typing in a step</div></div>
+      <div class="state-badge s-error"><div class="state-badge-name">STEP_INVALID</div><div class="state-badge-desc">Errors shown after NEXT</div></div>
+      <div class="state-badge s-loading"><div class="state-badge-name">STEP_VALIDATING</div><div class="state-badge-desc">Async server check running</div></div>
+      <div class="state-badge s-success"><div class="state-badge-name">STEP_COMPLETE</div><div class="state-badge-desc">All fields valid, step done</div></div>
+      <div class="state-badge s-idle"><div class="state-badge-name">REVIEW</div><div class="state-badge-desc">Summary before submit</div></div>
+      <div class="state-badge s-loading"><div class="state-badge-name">SUBMITTING</div><div class="state-badge-desc">API call in progress</div></div>
+      <div class="state-badge s-error"><div class="state-badge-name">SUBMIT_ERROR</div><div class="state-badge-desc">Network/server failure</div></div>
+      <div class="state-badge s-success"><div class="state-badge-name">COMPLETE</div><div class="state-badge-desc">Submitted successfully</div></div>
+    </div>
+    <div style="height:20px;"></div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-header"><span class="card-header-title">Loading state UI</span></div>
+        <div class="card-body">
+          <div class="edge-list">
+            <div class="edge-item"><span class="edge-badge edge-warn">Step validation</span><span class="edge-text">Spinner in NEXT button, button disabled, 300ms minimum delay to avoid flash</span></div>
+            <div class="edge-item"><span class="edge-badge edge-warn">Submitting</span><span class="edge-text">Full-width submit button becomes spinner, ALL form fields disabled, escape key blocked</span></div>
+            <div class="edge-item"><span class="edge-badge edge-ux">Async field</span><span class="edge-text">Tiny spinner icon inside input on right side, debounced 400ms before showing</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-header-title">Empty / placeholder states</span></div>
+        <div class="card-body">
+          <div class="edge-list">
+            <div class="edge-item"><span class="edge-badge edge-ux">Fresh form</span><span class="edge-text">No validation errors shown. Placeholder text in all fields. Progress bar at step 1.</span></div>
+            <div class="edge-item"><span class="edge-badge edge-ux">Draft banner</span><span class="edge-text">When restoring draft: "You have a saved draft from [time]. Continue or start fresh?" with dismiss.</span></div>
+            <div class="edge-item"><span class="edge-badge edge-ux">Optional step</span><span class="edge-text">Conditional steps that don't apply show a "Skip this section" option instead of empty fields.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDGE CASES -->
+  <div class="tab-panel" id="form-edges">
+    <div class="edge-list">
+      <div class="edge-item"><span class="edge-badge edge-warn">BACK navigation</span><span class="edge-text"><strong>Values must be preserved when going back.</strong> RHF preserves values by default, but custom components (rich text, file upload) need explicit state management. Test NEXT → BACK → NEXT round-trip.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-err">Browser back button</span><span class="edge-text"><strong>Browser back while on step 3</strong> should go to step 2 (not leave the form entirely). Sync step index to URL hash (#step-2). Intercept popstate event.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-err">Tab close / refresh</span><span class="edge-text"><strong>beforeunload event</strong> — warn user if form has unsaved changes and no draft persistence. "You have unsaved changes. Leave?" Browser native dialog, cannot be customized.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-sec">Double submit</span><span class="edge-text"><strong>Race condition:</strong> user clicks submit twice quickly. Disable submit button on first click. Use AbortController to cancel duplicate in-flight requests. Idempotent API endpoint with client-generated request ID.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-warn">Conditional steps</span><span class="edge-text"><strong>Step 3 only shows if checkbox on step 1 is checked.</strong> Re-evaluate step visibility on every field change. Clear data from hidden steps before submit. Don't include hidden step fields in final payload.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-perf">Large file upload</span><span class="edge-text"><strong>File field on step 2, user is on step 4.</strong> File should upload in background (pre-upload pattern). If user goes back and changes the field, cancel the pending upload and restart.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-ux">Autofill conflict</span><span class="edge-text"><strong>Browser autofills address fields across steps.</strong> RHF uncontrolled inputs may not capture autofilled values. Force trigger('fieldName') on step activation for fields known to be autofilled.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-err">Session expiry</span><span class="edge-text"><strong>User is on step 4, session expires (30 min idle).</strong> On submit, catch 401. Persist draft to localStorage (not session). Redirect to login with ?returnTo. On return, restore from localStorage and show "Welcome back" notification.</span></div>
+    </div>
+  </div>
+
+  <!-- REACT STRUCTURE -->
+  <div class="tab-panel" id="form-code">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">TypeScript · React structure</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+      <div class="code-inner"><pre>
+<span class="cmt">// ─── File structure ────────────────────────────────────────────</span>
+<span class="cmt">// components/MultiStepForm/</span>
+<span class="cmt">// ├── index.tsx                 ← public export</span>
+<span class="cmt">// ├── FormOrchestrator.tsx      ← state machine, routing between steps</span>
+<span class="cmt">// ├── FormProgress.tsx          ← progress bar + step indicators</span>
+<span class="cmt">// ├── StepRenderer.tsx          ← dynamically renders current step</span>
+<span class="cmt">// ├── ReviewStep.tsx            ← read-only summary</span>
+<span class="cmt">// ├── SubmitError.tsx           ← retry UI</span>
+<span class="cmt">// ├── useFormOrchestrator.ts    ← core state machine hook</span>
+<span class="cmt">// ├── useDraftPersistence.ts    ← sessionStorage read/write</span>
+<span class="cmt">// ├── useStepValidation.ts      ← async step-level validation</span>
+<span class="cmt">// ├── formReducer.ts            ← useReducer actions/reducer</span>
+<span class="cmt">// ├── types.ts                  ← StepConfig, FormState, etc.</span>
+<span class="cmt">// └── schemas/                  ← Zod schemas per step</span>
+
+<span class="cmt">// ─── Core types ────────────────────────────────────────────────</span>
+<span class="kw">interface</span> <span class="type">StepConfig</span>&lt;<span class="type">T</span>&gt; {
+  <span class="prop">id</span>: <span class="type">string</span>;
+  <span class="prop">title</span>: <span class="type">string</span>;
+  <span class="prop">fields</span>: (<span class="kw">keyof</span> <span class="type">T</span>)[];
+  <span class="prop">schema</span>: <span class="type">ZodSchema</span>;
+  <span class="prop">component</span>: <span class="type">React.ComponentType</span>&lt;{ <span class="prop">control</span>: <span class="type">Control</span>&lt;<span class="type">T</span>&gt; }&gt;;
+  <span class="prop">condition?</span>: (<span class="prop">values</span>: <span class="type">Partial</span>&lt;<span class="type">T</span>&gt;) =&gt; <span class="type">boolean</span>;
+  <span class="prop">validateAsync?</span>: (<span class="prop">data</span>: <span class="type">Partial</span>&lt;<span class="type">T</span>&gt;) =&gt; <span class="type">Promise</span>&lt;<span class="type">Record</span>&lt;<span class="type">string</span>, <span class="type">string</span>&gt;&gt;;
+}
+
+<span class="kw">type</span> <span class="type">FormMachineState</span> =
+  | { <span class="prop">status</span>: <span class="str">'idle'</span> }
+  | { <span class="prop">status</span>: <span class="str">'active'</span>; <span class="prop">step</span>: <span class="type">number</span>; <span class="prop">visited</span>: <span class="type">Set</span>&lt;<span class="type">number</span>&gt; }
+  | { <span class="prop">status</span>: <span class="str">'validating'</span>; <span class="prop">step</span>: <span class="type">number</span> }
+  | { <span class="prop">status</span>: <span class="str">'submitting'</span> }
+  | { <span class="prop">status</span>: <span class="str">'submit_error'</span>; <span class="prop">error</span>: <span class="type">Error</span> }
+  | { <span class="prop">status</span>: <span class="str">'complete'</span> };
+
+<span class="cmt">// ─── FormOrchestrator ──────────────────────────────────────────</span>
+<span class="kw">export function</span> <span class="fn">MultiStepForm</span>&lt;<span class="type">T</span> <span class="kw">extends</span> <span class="type">FieldValues</span>&gt;({
+  steps, initialValues, onSubmit, onStepChange, persistKey, validateOnStep
+}: <span class="type">MultiStepFormProps</span>&lt;<span class="type">T</span>&gt;) {
+  <span class="kw">const</span> methods = <span class="fn">useForm</span>&lt;<span class="type">T</span>&gt;({
+    <span class="prop">resolver</span>: <span class="fn">zodResolver</span>(<span class="fn">mergeSchemas</span>(steps)),
+    <span class="prop">defaultValues</span>: initialValues,
+    <span class="prop">mode</span>: <span class="str">'onBlur'</span>,
+    <span class="prop">criteriaMode</span>: <span class="str">'all'</span>,
+  });
+
+  <span class="kw">const</span> [state, dispatch] = <span class="fn">useReducer</span>(formReducer, { <span class="prop">status</span>: <span class="str">'idle'</span> });
+  <span class="kw">const</span> { <span class="prop">restoreDraft</span>, <span class="prop">saveDraft</span>, <span class="prop">clearDraft</span> } = <span class="fn">useDraftPersistence</span>(persistKey);
+
+  <span class="kw">const</span> activeSteps = <span class="fn">useMemo</span>(() =&gt;
+    steps.<span class="fn">filter</span>(s =&gt; !s.condition || s.<span class="fn">condition</span>(methods.<span class="fn">watch</span>())),
+    [steps, methods.<span class="fn">watch</span>()]
+  );
+
+  <span class="kw">const</span> <span class="fn">handleNext</span> = <span class="kw">async</span> () =&gt; {
+    <span class="kw">if</span> (state.status !== <span class="str">'active'</span>) <span class="kw">return</span>;
+    <span class="kw">const</span> currentStep = activeSteps[state.step];
+    <span class="kw">const</span> valid = <span class="kw">await</span> methods.<span class="fn">trigger</span>(currentStep.fields);
+    <span class="kw">if</span> (!valid) { <span class="fn">scrollToFirstError</span>(); <span class="kw">return</span>; }
+
+    dispatch({ <span class="prop">type</span>: <span class="str">'VALIDATING'</span> });
+    <span class="kw">try</span> {
+      <span class="kw">const</span> errors = <span class="kw">await</span> currentStep.<span class="fn">validateAsync?.</span>(methods.<span class="fn">getValues</span>());
+      <span class="kw">if</span> (errors && <span class="type">Object</span>.<span class="fn">keys</span>(errors).length) {
+        <span class="type">Object</span>.<span class="fn">entries</span>(errors).<span class="fn">forEach</span>(([k, v]) =&gt;
+          methods.<span class="fn">setError</span>(k <span class="kw">as</span> <span class="kw">Path</span>&lt;<span class="type">T</span>&gt;, { <span class="prop">message</span>: v }));
+        dispatch({ <span class="prop">type</span>: <span class="str">'VALIDATE_FAIL'</span> });
+      } <span class="kw">else</span> {
+        dispatch({ <span class="prop">type</span>: <span class="str">'NEXT'</span>, <span class="prop">maxStep</span>: activeSteps.length - <span class="num">1</span> });
+        <span class="fn">onStepChange?.</span>(state.step + <span class="num">1</span>);
+      }
+    } <span class="kw">catch</span> { dispatch({ <span class="prop">type</span>: <span class="str">'VALIDATE_FAIL'</span> }); }
+  };
+
+  <span class="kw">const</span> <span class="fn">handleSubmit</span> = methods.<span class="fn">handleSubmit</span>(<span class="kw">async</span> (data) =&gt; {
+    dispatch({ <span class="prop">type</span>: <span class="str">'SUBMITTING'</span> });
+    <span class="kw">try</span> {
+      <span class="kw">await</span> <span class="fn">onSubmit</span>(<span class="fn">stripHiddenSteps</span>(data, activeSteps));
+      <span class="fn">clearDraft</span>();
+      dispatch({ <span class="prop">type</span>: <span class="str">'SUCCESS'</span> });
+    } <span class="kw">catch</span> (err) {
+      <span class="kw">if</span> (err <span class="kw">instanceof</span> <span class="type">ValidationError</span>) <span class="fn">mapServerErrors</span>(err, methods, activeSteps);
+      dispatch({ <span class="prop">type</span>: <span class="str">'ERROR'</span>, <span class="prop">error</span>: err <span class="kw">as</span> <span class="type">Error</span> });
+    }
+  });
+
+  <span class="kw">return</span> (
+    &lt;<span class="tag">FormProvider</span> {...methods}&gt;
+      &lt;<span class="tag">FormProgress</span> <span class="attr">steps</span>={activeSteps} <span class="attr">current</span>={state.step} <span class="attr">visited</span>={state.visited} /&gt;
+      &lt;<span class="tag">ErrorBoundary</span> <span class="attr">fallback</span>={&lt;<span class="tag">FormCrashFallback</span> /&gt;}&gt;
+        {state.status === <span class="str">'complete'</span>
+          ? &lt;<span class="tag">SuccessScreen</span> /&gt;
+          : state.status === <span class="str">'submit_error'</span>
+          ? &lt;<span class="tag">SubmitError</span> <span class="attr">error</span>={state.error} <span class="attr">onRetry</span>={handleSubmit} /&gt;
+          : state.step === activeSteps.length
+          ? &lt;<span class="tag">ReviewStep</span> <span class="attr">steps</span>={activeSteps} <span class="attr">onEdit</span>={dispatch} <span class="attr">onSubmit</span>={handleSubmit} /&gt;
+          : &lt;<span class="tag">StepRenderer</span> <span class="attr">step</span>={activeSteps[state.step]} <span class="attr">onNext</span>={handleNext} <span class="attr">onBack</span>={() =&gt; dispatch({ type: 'BACK' })} <span class="attr">isValidating</span>={state.status === 'validating'} /&gt;
+        }
+      &lt;/<span class="tag">ErrorBoundary</span>&gt;
+    &lt;/<span class="tag">FormProvider</span>&gt;
+  );
+}</pre></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     02 — PRICING CALCULATOR
+════════════════════════════════════════════════════ -->
+<div class="section" id="s-pricing">
+  <div class="section-header">
+    <div class="section-num">Component 02</div>
+    <h1 class="section-title">Dynamic Pricing<br>Calculator</h1>
+    <p class="section-desc">Real-time price computation with debouncing, server-side pricing rules, discount validation, and currency/locale formatting. Optimistic local computation with server reconciliation.</p>
+    <div class="tag-row">
+      <span class="tag-pill tp-blue">useMemo</span>
+      <span class="tag-pill tp-green">useDeferredValue</span>
+      <span class="tag-pill tp-amber">TanStack Query</span>
+      <span class="tag-pill tp-purple">Intl.NumberFormat</span>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(event,'pricing','machine')">State machine</button>
+    <button class="tab-btn" onclick="switchTab(event,'pricing','data')">Data flow</button>
+    <button class="tab-btn" onclick="switchTab(event,'pricing','errors')">Error handling</button>
+    <button class="tab-btn" onclick="switchTab(event,'pricing','states')">UI states</button>
+    <button class="tab-btn" onclick="switchTab(event,'pricing','edges')">Edge cases</button>
+    <button class="tab-btn" onclick="switchTab(event,'pricing','code')">React structure</button>
+  </div>
+
+  <div class="tab-panel active" id="pricing-machine">
+    <div class="card">
+      <div class="card-header"><span class="card-header-title">Pricing calculator state machine</span></div>
+      <div class="card-body">
+        <div class="state-machine">
+<pre>
+<span class="sm-comment">┌─────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="sm-comment">│               DYNAMIC PRICING CALCULATOR STATE MACHINE                     │</span>
+<span class="sm-comment">└─────────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="sm-state">IDLE</span>  <span class="sm-comment">// Show base price, no user interaction yet</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">MOUNT</span><span class="sm-arrow">]────────────→</span> <span class="sm-state">LOADED</span>  <span class="sm-action">! fetchBasePrice()</span>
+
+<span class="sm-state">LOADING_BASE</span>  <span class="sm-comment">// Fetching initial pricing config from server</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">SUCCESS</span><span class="sm-arrow">]──────────→</span> <span class="sm-state">IDLE_READY</span>  <span class="sm-action">! setPricingConfig(config)</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">ERROR</span><span class="sm-arrow">]────────────→</span> <span class="sm-state">CONFIG_ERROR</span>
+
+<span class="sm-state">IDLE_READY</span>  <span class="sm-comment">// Config loaded, showing computed local price</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">INPUT_CHANGE</span><span class="sm-arrow">]────→</span> <span class="sm-state">COMPUTING_LOCAL</span>  <span class="sm-action">! updateParams()</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">COUPON_ENTER</span><span class="sm-arrow">]────→</span> <span class="sm-state">VALIDATING_COUPON</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">PLAN_SELECT</span><span class="sm-arrow">]─────→</span> <span class="sm-state">COMPUTING_LOCAL</span>  <span class="sm-action">! setPlan()</span>
+
+<span class="sm-state">COMPUTING_LOCAL</span>  <span class="sm-comment">// Instant local calculation (no network)</span>
+  <span class="sm-arrow">│</span>  <span class="sm-comment">// useMemo runs synchronously — show result immediately</span>
+  <span class="sm-arrow">│</span>  <span class="sm-comment">// Debounce server sync to 600ms</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">COMPUTE_DONE</span><span class="sm-arrow">]────→</span> <span class="sm-state">LOCAL_SHOWN</span>  <span class="sm-action">! scheduleServerSync(600ms)</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">INPUT_CHANGE</span><span class="sm-arrow">]────→</span> <span class="sm-state">COMPUTING_LOCAL</span>  <span class="sm-action">! resetDebounce()</span>
+
+<span class="sm-state">LOCAL_SHOWN</span>  <span class="sm-comment">// Local price shown with subtle "estimated" indicator</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">SYNC_TRIGGER</span><span class="sm-arrow">]────→</span> <span class="sm-state">SYNCING_SERVER</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">INPUT_CHANGE</span><span class="sm-arrow">]────→</span> <span class="sm-state">COMPUTING_LOCAL</span>
+
+<span class="sm-state">SYNCING_SERVER</span>  <span class="sm-comment">// Verifying price with backend (discounts, taxes, limits)</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">MATCH</span><span class="sm-arrow">]──────────→</span> <span class="sm-state">CONFIRMED</span>   <span class="sm-action">! removeEstimatedLabel()</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">MISMATCH</span><span class="sm-arrow">]──────→</span> <span class="sm-state">RECONCILED</span>  <span class="sm-action">! animatePriceChange(newPrice)</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">ERROR</span><span class="sm-arrow">]──────────→</span> <span class="sm-state">SYNC_ERROR</span>   <span class="sm-action">! showSyncWarning()</span>
+
+<span class="sm-state">VALIDATING_COUPON</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">VALID</span><span class="sm-arrow">]──────────→</span> <span class="sm-state">CONFIRMED</span>   <span class="sm-action">! applyDiscount(amount)</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">INVALID</span><span class="sm-arrow">]────────→</span> <span class="sm-state">IDLE_READY</span>  <span class="sm-action">! showCouponError()</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">EXPIRED</span><span class="sm-arrow">]────────→</span> <span class="sm-state">IDLE_READY</span>  <span class="sm-action">! showExpiredError()</span>
+
+<span class="sm-state">CONFIRMED</span>  <span class="sm-comment">// Server-verified price, safe to proceed to checkout</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">INPUT_CHANGE</span><span class="sm-arrow">]────→</span> <span class="sm-state">COMPUTING_LOCAL</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">CHECKOUT</span><span class="sm-arrow">]──────→</span> <span class="sm-state">CHECKOUT</span>  <span class="sm-comment">// pass priceToken to checkout</span>
+</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="pricing-data">
+    <div class="grid2">
+      <div class="card">
+        <div class="card-header"><span class="card-header-title">Props API</span></div>
+        <div class="card-body">
+          <table class="prop-table">
+            <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><span class="prop-name">plans</span></td><td><span class="prop-type">Plan[]</span></td><td class="prop-desc">Available plan tiers with base prices</td></tr>
+              <tr><td><span class="prop-name">currency</span></td><td><span class="prop-type">string</span></td><td class="prop-desc">ISO 4217 code. Used for Intl.NumberFormat</td></tr>
+              <tr><td><span class="prop-name">locale</span></td><td><span class="prop-type">string</span></td><td class="prop-desc">BCP 47 locale for number/currency formatting</td></tr>
+              <tr><td><span class="prop-name">onPriceConfirmed</span></td><td><span class="prop-type">(token: string) =&gt; void</span></td><td class="prop-desc">Fired with server price token for checkout</td></tr>
+              <tr><td><span class="prop-name">pricingEndpoint</span></td><td><span class="prop-type">string</span></td><td class="prop-desc">POST endpoint for server price calculation</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-header-title">Computation flow</span></div>
+        <div class="card-body">
+          <div class="state-machine" style="font-size:10px;line-height:1.9;">
+<pre>
+<span class="sm-comment">// Two-layer computation strategy</span>
+
+Layer 1: <span class="sm-action">Local (synchronous, instant)</span>
+  basePrice * qty
+  - plan discounts (from config)
+  - volume tiers (from config)
+  + taxes (estimated by region)
+  Display immediately as "~$X.XX"
+
+Layer 2: <span class="sm-action">Server (async, 600ms debounce)</span>
+  POST /api/price { params }
+  Returns:
+    { total, breakdown,
+      couponApplied, priceToken }
+  priceToken: signed JWT (5min TTL)
+  Used to prevent price tampering
+  in checkout
+
+<span class="sm-comment">// Reconciliation:</span>
+  If |local - server| > $0.01
+    Animate number change
+    Show "Price updated" notice
+</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="pricing-errors">
+    <div class="edge-list">
+      <div class="edge-item"><span class="edge-badge edge-warn">Sync failure</span><span class="edge-text"><strong>Server unreachable during sync:</strong> show local price with asterisk "* Estimated price". Block checkout button until confirmed. Auto-retry every 30s.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-err">Price mismatch</span><span class="edge-text"><strong>Local calc differs from server by >5%:</strong> animate to server price with subtle flash. Log mismatch for debugging pricing rule drift.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-sec">Token expiry</span><span class="edge-text"><strong>User takes >5 min to checkout:</strong> priceToken expires. On checkout, silently re-fetch before proceeding. Show "Confirming price..." spinner.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-warn">Invalid coupon</span><span class="edge-text">Distinguish: invalid code / expired / wrong plan / usage limit hit. Show specific message per case. Don't just say "Invalid code."</span></div>
+      <div class="edge-item"><span class="edge-badge edge-err">Zero/negative result</span><span class="edge-text"><strong>100% discount coupon:</strong> show $0.00 but still require payment method for future billing. Edge: coupon + plan combo = negative? Clamp to 0, never show negative price.</span></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="pricing-states">
+    <div class="states-grid">
+      <div class="state-badge s-loading"><div class="state-badge-name">LOADING_CONFIG</div><div class="state-badge-desc">Skeleton price display</div></div>
+      <div class="state-badge s-idle"><div class="state-badge-name">READY</div><div class="state-badge-desc">Local price shown</div></div>
+      <div class="state-badge s-partial"><div class="state-badge-name">ESTIMATED</div><div class="state-badge-desc">Local calc, sync pending</div></div>
+      <div class="state-badge s-loading"><div class="state-badge-name">SYNCING</div><div class="state-badge-desc">Subtle spinner on price</div></div>
+      <div class="state-badge s-success"><div class="state-badge-name">CONFIRMED</div><div class="state-badge-desc">Server-verified, ready</div></div>
+      <div class="state-badge s-loading"><div class="state-badge-name">COUPON_CHECKING</div><div class="state-badge-desc">Spinner in coupon field</div></div>
+      <div class="state-badge s-error"><div class="state-badge-name">COUPON_INVALID</div><div class="state-badge-desc">Error message shown</div></div>
+      <div class="state-badge s-success"><div class="state-badge-name">COUPON_APPLIED</div><div class="state-badge-desc">Discount line shown</div></div>
+      <div class="state-badge s-error"><div class="state-badge-name">SYNC_ERROR</div><div class="state-badge-desc">Estimated + warning badge</div></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="pricing-edges">
+    <div class="edge-list">
+      <div class="edge-item"><span class="edge-badge edge-perf">Rapid input</span><span class="edge-text"><strong>User drags a quantity slider quickly:</strong> useDeferredValue for the price display prevents janky re-renders. Local compute stays instant, server debounce resets on each change.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-warn">Currency switch</span><span class="edge-text"><strong>User changes currency mid-session:</strong> invalidate priceToken, re-sync immediately. Never display a price token obtained in a different currency.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-sec">Price manipulation</span><span class="edge-text"><strong>Client modifies price in DevTools:</strong> checkout always sends priceToken (signed JWT), not a raw number. Server validates token on checkout — client-side price is display only.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-err">Concurrent tabs</span><span class="edge-text"><strong>User has calculator open in two tabs, coupon applied in one:</strong> BroadcastChannel to sync coupon state across tabs. Or: re-validate on window focus.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-ux">Long price numbers</span><span class="edge-text">Enterprise quantities can produce 7+ digit prices. Use compact notation above 10,000 (e.g. $12.4k). Test all locales: some use periods as thousand separators.</span></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="pricing-code">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">TypeScript · React structure</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+      <div class="code-inner"><pre>
+<span class="cmt">// ─── usePricingCalculator hook ─────────────────────────────────</span>
+<span class="kw">function</span> <span class="fn">usePricingCalculator</span>({
+  plan, qty, addons, coupon, currency, locale, endpoint
+}: <span class="type">PricingParams</span>) {
+  <span class="cmt">// Layer 1: instant local computation</span>
+  <span class="kw">const</span> localPrice = <span class="fn">useMemo</span>(() =&gt;
+    <span class="fn">computeLocalPrice</span>({ plan, qty, addons }),
+    [plan, qty, addons]
+  );
+
+  <span class="cmt">// Defer rendering so slider drag stays smooth</span>
+  <span class="kw">const</span> deferredParams = <span class="fn">useDeferredValue</span>({ plan, qty, addons, coupon });
+  <span class="kw">const</span> isPending = deferredParams !== { plan, qty, addons, coupon };
+
+  <span class="cmt">// Layer 2: debounced server sync</span>
+  <span class="kw">const</span> { data: serverPrice, isLoading, isError } = <span class="fn">useQuery</span>({
+    <span class="prop">queryKey</span>: [<span class="str">'price'</span>, deferredParams],
+    <span class="prop">queryFn</span>: () =&gt; <span class="fn">fetchPrice</span>(endpoint, deferredParams),
+    <span class="prop">staleTime</span>: <span class="num">5</span> * <span class="num">60</span> * <span class="num">1000</span>,  <span class="cmt">// 5 min — matches token TTL</span>
+    <span class="prop">placeholderData</span>: <span class="fn">keepPreviousData</span>,
+    <span class="prop">retry</span>: <span class="num">2</span>,
+  });
+
+  <span class="kw">const</span> displayPrice = serverPrice?.total ?? localPrice;
+  <span class="kw">const</span> isEstimated = !serverPrice || isPending || isLoading;
+
+  <span class="kw">const</span> formatter = <span class="fn">useMemo</span>(() =&gt;
+    <span class="kw">new</span> <span class="type">Intl.NumberFormat</span>(locale, {
+      <span class="prop">style</span>: <span class="str">'currency'</span>, currency,
+      <span class="prop">minimumFractionDigits</span>: <span class="num">2</span>,
+    }),
+    [locale, currency]
+  );
+
+  <span class="kw">return</span> {
+    displayPrice: formatter.<span class="fn">format</span>(displayPrice / <span class="num">100</span>),
+    isEstimated,
+    isError,
+    breakdown: serverPrice?.breakdown ?? [],
+    priceToken: serverPrice?.token,
+    couponResult: serverPrice?.coupon,
+  };
+}
+
+<span class="cmt">// ─── PricingCalculator component ───────────────────────────────</span>
+<span class="kw">export function</span> <span class="fn">PricingCalculator</span>({ plans, currency, locale, onPriceConfirmed, pricingEndpoint }) {
+  <span class="kw">const</span> [params, setParams] = <span class="fn">useState</span>&lt;<span class="type">PricingParams</span>&gt;({
+    <span class="prop">plan</span>: plans[<span class="num">0</span>], <span class="prop">qty</span>: <span class="num">1</span>, <span class="prop">addons</span>: [], <span class="prop">coupon</span>: <span class="kw">null</span>
+  });
+
+  <span class="kw">const</span> pricing = <span class="fn">usePricingCalculator</span>({ ...params, currency, locale, <span class="prop">endpoint</span>: pricingEndpoint });
+
+  <span class="kw">return</span> (
+    &lt;<span class="tag">div</span>&gt;
+      &lt;<span class="tag">PlanSelector</span> <span class="attr">plans</span>={plans} <span class="attr">selected</span>={params.plan} <span class="attr">onChange</span>={p =&gt; setParams(prev =&gt; ({...prev, plan: p}))} /&gt;
+      &lt;<span class="tag">QuantityInput</span> <span class="attr">value</span>={params.qty} <span class="attr">onChange</span>={q =&gt; setParams(prev =&gt; ({...prev, qty: q}))} /&gt;
+      &lt;<span class="tag">AddonSelector</span> <span class="attr">addons</span>={params.addons} <span class="attr">onChange</span>={a =&gt; setParams(prev =&gt; ({...prev, addons: a}))} /&gt;
+      &lt;<span class="tag">CouponField</span> <span class="attr">onApply</span>={c =&gt; setParams(prev =&gt; ({...prev, coupon: c}))} <span class="attr">result</span>={pricing.couponResult} /&gt;
+      &lt;<span class="tag">PriceDisplay</span>
+        <span class="attr">price</span>={pricing.displayPrice}
+        <span class="attr">isEstimated</span>={pricing.isEstimated}
+        <span class="attr">isError</span>={pricing.isError}
+        <span class="attr">breakdown</span>={pricing.breakdown}
+      /&gt;
+      &lt;<span class="tag">CheckoutButton</span>
+        <span class="attr">disabled</span>={pricing.isEstimated || pricing.isError}
+        <span class="attr">onClick</span>={() =&gt; pricing.priceToken && onPriceConfirmed(pricing.priceToken)}
+      /&gt;
+    &lt;/<span class="tag">div</span>&gt;
+  );
+}</pre></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     03 — SEARCH + FILTERS
+════════════════════════════════════════════════════ -->
+<div class="section" id="s-search">
+  <div class="section-header">
+    <div class="section-num">Component 03</div>
+    <h1 class="section-title">Search + Filters</h1>
+    <p class="section-desc">Faceted search with URL-synced filter state, instant local filtering, server-side search, sort controls, and keyboard-navigable results. The most stateful component in the system.</p>
+    <div class="tag-row">
+      <span class="tag-pill tp-blue">nuqs (URL state)</span>
+      <span class="tag-pill tp-green">useTransition</span>
+      <span class="tag-pill tp-amber">TanStack Query</span>
+      <span class="tag-pill tp-purple">virtual scroll</span>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(event,'search','machine')">State machine</button>
+    <button class="tab-btn" onclick="switchTab(event,'search','data')">Data flow</button>
+    <button class="tab-btn" onclick="switchTab(event,'search','errors')">Error handling</button>
+    <button class="tab-btn" onclick="switchTab(event,'search','states')">UI states</button>
+    <button class="tab-btn" onclick="switchTab(event,'search','edges')">Edge cases</button>
+    <button class="tab-btn" onclick="switchTab(event,'search','code')">React structure</button>
+  </div>
+
+  <div class="tab-panel active" id="search-machine">
+    <div class="card">
+      <div class="card-header"><span class="card-header-title">Search state machine</span></div>
+      <div class="card-body">
+        <div class="state-machine">
+<pre>
+<span class="sm-comment">┌─────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="sm-comment">│              SEARCH + FACETED FILTER STATE MACHINE                         │</span>
+<span class="sm-comment">└─────────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="sm-comment">// Two parallel state axes: QUERY and RESULTS</span>
+
+<span class="sm-comment">// ── QUERY AXIS ─────────────────────────────────────────────────</span>
+<span class="sm-state">QUERY_EMPTY</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">TYPE</span><span class="sm-arrow">]──────────────→</span> <span class="sm-state">QUERY_TYPING</span>  <span class="sm-action">! updateURL(q=…)</span>
+
+<span class="sm-state">QUERY_TYPING</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">TYPE</span><span class="sm-arrow">]──────────────→</span> <span class="sm-state">QUERY_TYPING</span>      <span class="sm-action">! debounce(300ms) ! updateURL</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">CLEAR</span><span class="sm-arrow">]─────────────→</span> <span class="sm-state">QUERY_EMPTY</span>       <span class="sm-action">! clearURL(q)</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">DEBOUNCE_DONE</span><span class="sm-arrow">]───→</span> <span class="sm-state">QUERY_COMMITTED</span>   <span class="sm-action">! triggerSearch()</span>
+
+<span class="sm-state">QUERY_COMMITTED</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">TYPE</span><span class="sm-arrow">]──────────────→</span> <span class="sm-state">QUERY_TYPING</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">FILTER_CHANGE</span><span class="sm-arrow">]───→</span> <span class="sm-state">QUERY_COMMITTED</span>  <span class="sm-action">! triggerSearch() ! resetPage()</span>
+
+<span class="sm-comment">// ── FILTER AXIS (runs alongside Query axis) ────────────────────</span>
+<span class="sm-state">FILTERS_CLEAN</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">FILTER_TOGGLE</span><span class="sm-arrow">]───→</span> <span class="sm-state">FILTERS_ACTIVE</span>  <span class="sm-action">! addFilter(facet,val) ! updateURL</span>
+
+<span class="sm-state">FILTERS_ACTIVE</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">FILTER_TOGGLE</span><span class="sm-arrow">]───→</span> <span class="sm-state">FILTERS_ACTIVE</span>  <span class="sm-action">! toggleFilter()</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">FILTER_CLEAR_ONE</span><span class="sm-arrow">]─→</span> <span class="sm-state">FILTERS_ACTIVE | CLEAN</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">CLEAR_ALL</span><span class="sm-arrow">]───────→</span> <span class="sm-state">FILTERS_CLEAN</span>  <span class="sm-action">! clearURL(filters)</span>
+
+<span class="sm-comment">// ── RESULTS AXIS ───────────────────────────────────────────────</span>
+<span class="sm-state">RESULTS_IDLE</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">SEARCH_TRIGGER</span><span class="sm-arrow">]──→</span> <span class="sm-state">RESULTS_LOADING</span>
+
+<span class="sm-state">RESULTS_LOADING</span>  <span class="sm-comment">// useTransition: UI stays interactive during fetch</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">SUCCESS</span><span class="sm-arrow">]──────────→</span> <span class="sm-state">RESULTS_SHOWN</span>    <span class="sm-action">! setResults()</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">EMPTY</span><span class="sm-arrow">]────────────→</span> <span class="sm-state">RESULTS_EMPTY</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">ERROR</span><span class="sm-arrow">]────────────→</span> <span class="sm-state">RESULTS_ERROR</span>
+
+<span class="sm-state">RESULTS_SHOWN</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">SORT_CHANGE</span><span class="sm-arrow">]─────→</span> <span class="sm-state">RESULTS_LOADING</span>  <span class="sm-action">! updateURL(sort=…) ! resetPage()</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">PAGE_CHANGE</span><span class="sm-arrow">]─────→</span> <span class="sm-state">RESULTS_LOADING</span>  <span class="sm-action">! updateURL(page=N) ! scrollTop()</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">LOAD_MORE</span><span class="sm-arrow">]───────→</span> <span class="sm-state">RESULTS_APPENDING</span>
+
+<span class="sm-state">RESULTS_APPENDING</span>  <span class="sm-comment">// Infinite scroll — append below existing results</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">SUCCESS</span><span class="sm-arrow">]──────────→</span> <span class="sm-state">RESULTS_SHOWN</span>    <span class="sm-action">! appendResults()</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">NO_MORE</span><span class="sm-arrow">]─────────→</span> <span class="sm-state">RESULTS_EXHAUSTED</span>
+</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="search-data">
+    <div class="card">
+      <div class="card-header"><span class="card-header-title">URL state schema (nuqs)</span></div>
+      <div class="card-body">
+        <div class="state-machine" style="font-size:10px;line-height:2;">
+<pre>
+<span class="sm-comment">// All search state lives in URL — bookmarkable, shareable, SSR-renderable</span>
+
+<span class="sm-action">?q</span>=<span class="sm-state">string</span>             <span class="sm-comment">// search query</span>
+<span class="sm-action">&category</span>=<span class="sm-state">string[]</span>    <span class="sm-comment">// multi-value facet (repeated: ?category=a&category=b)</span>
+<span class="sm-action">&price_min</span>=<span class="sm-state">number</span>     <span class="sm-comment">// range facet lower bound</span>
+<span class="sm-action">&price_max</span>=<span class="sm-state">number</span>     <span class="sm-comment">// range facet upper bound</span>
+<span class="sm-action">&sort</span>=<span class="sm-state">string</span>          <span class="sm-comment">// e.g. "relevance" | "price_asc" | "date_desc"</span>
+<span class="sm-action">&page</span>=<span class="sm-state">number</span>          <span class="sm-comment">// 1-indexed page number</span>
+<span class="sm-action">&per_page</span>=<span class="sm-state">number</span>      <span class="sm-comment">// items per page (25|50|100)</span>
+
+<span class="sm-comment">// useSearchParams hook wraps nuqs parsers:</span>
+<span class="kw">const</span> [q, setQ] = <span class="fn">useQueryState</span>(<span class="str">'q'</span>, <span class="fn">parseAsString</span>.<span class="fn">withDefault</span>(<span class="str">''</span>));
+<span class="kw">const</span> [cats, setCats] = <span class="fn">useQueryState</span>(<span class="str">'category'</span>, <span class="fn">parseAsArrayOf</span>(<span class="fn">parseAsString</span>));
+<span class="kw">const</span> [sort, setSort] = <span class="fn">useQueryState</span>(<span class="str">'sort'</span>, <span class="fn">parseAsStringEnum</span>(SORT_OPTIONS));
+<span class="kw">const</span> [page, setPage] = <span class="fn">useQueryState</span>(<span class="str">'page'</span>, <span class="fn">parseAsInteger</span>.<span class="fn">withDefault</span>(<span class="num">1</span>));
+
+<span class="sm-comment">// Reset page to 1 on any filter/query change:</span>
+<span class="fn">startTransition</span>(() =&gt; {
+  <span class="fn">setQ</span>(newQuery);
+  <span class="fn">setPage</span>(<span class="num">1</span>);  <span class="sm-comment">// always reset pagination</span>
+});
+</pre>
+        </div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-header"><span class="card-header-title">Facet count strategy</span></div>
+        <div class="card-body">
+          <div class="state-machine" style="font-size:10px;line-height:1.9;">
+<pre>
+<span class="sm-comment">// Problem: facet counts should reflect</span>
+<span class="sm-comment">// what's available IF that filter was applied,</span>
+<span class="sm-comment">// not the current result count (disjunctive)</span>
+
+<span class="sm-action">Approach: Disjunctive faceting</span>
+  For category facets:
+    Run N+1 queries (one per category facet)
+    OR: use specialized search engine
+    (Algolia, Typesense, Meilisearch)
+    that returns facet counts natively
+
+  For range facets (price):
+    Return min/max of entire dataset
+    matching current query+other filters
+    Show as histogram overlay on slider
+
+<span class="sm-comment">// Facet count = 0 → disable that option</span>
+<span class="sm-comment">// Facet count = 0 AND active → show but</span>
+<span class="sm-comment">//   indicate "0 results, remove filter"</span>
+</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-header-title">Keyboard navigation</span></div>
+        <div class="card-body">
+          <div class="state-machine" style="font-size:10px;line-height:1.9;">
+<pre>
+<span class="sm-comment">// Search input keyboard handling</span>
+
+<span class="sm-action">↑ / ↓</span>     Navigate suggestion list
+<span class="sm-action">Enter</span>     Commit selected suggestion
+           OR commit typed query
+<span class="sm-action">Escape</span>    Close suggestions, keep value
+<span class="sm-action">Tab</span>       Close suggestions, move focus
+<span class="sm-action">Ctrl+K</span>   Open search from anywhere
+           (global keyboard shortcut)
+
+<span class="sm-comment">// ARIA roles:</span>
+input: role="combobox"
+       aria-expanded={open}
+       aria-autocomplete="list"
+       aria-activedescendant={activeId}
+ul:    role="listbox"
+li:    role="option"
+       aria-selected={i === active}
+</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="search-errors">
+    <div class="edge-list">
+      <div class="edge-item"><span class="edge-badge edge-err">Search API down</span><span class="edge-text"><strong>Show previous results stale + banner:</strong> "Search is temporarily unavailable. Showing cached results." Allow filter interactions on cached results via local filtering.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-warn">Empty results</span><span class="edge-text"><strong>Distinguish: no results for this query vs no results for query+filters.</strong> If filters are active, show "No results with current filters — clear filters to see N results for [query]."</span></div>
+      <div class="edge-item"><span class="edge-badge edge-warn">Conflicting filters</span><span class="edge-text"><strong>User applies mutually exclusive filters</strong> (price_min=100, price_max=50): validate client-side before sending. Clamp/swap values automatically with feedback.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-perf">Slow query</span><span class="edge-text"><strong>Search takes >800ms:</strong> show skeleton results (maintain layout structure) rather than spinner. Previous results stay visible with 40% opacity until new results arrive (no layout shift).</span></div>
+      <div class="edge-item"><span class="edge-badge edge-sec">XSS in query</span><span class="edge-text"><strong>Display query back to user</strong> ("Showing results for &lt;script&gt;"): always use textContent / innerText, never innerHTML for user query display.</span></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="search-states">
+    <div class="states-grid">
+      <div class="state-badge s-empty"><div class="state-badge-name">INITIAL</div><div class="state-badge-desc">No query, featured items</div></div>
+      <div class="state-badge s-loading"><div class="state-badge-name">SEARCHING</div><div class="state-badge-desc">Skeleton cards, filters locked</div></div>
+      <div class="state-badge s-idle"><div class="state-badge-name">RESULTS</div><div class="state-badge-desc">Grid/list + facet counts</div></div>
+      <div class="state-badge s-loading"><div class="state-badge-name">FILTERING</div><div class="state-badge-desc">Stale results + dim overlay</div></div>
+      <div class="state-badge s-loading"><div class="state-badge-name">PAGINATING</div><div class="state-badge-desc">Scroll to top + skeleton</div></div>
+      <div class="state-badge s-loading"><div class="state-badge-name">APPENDING</div><div class="state-badge-desc">Spinner below last item</div></div>
+      <div class="state-badge s-empty"><div class="state-badge-name">NO_RESULTS</div><div class="state-badge-desc">Illustration + suggestions</div></div>
+      <div class="state-badge s-empty"><div class="state-badge-name">NO_RESULTS_FILTERED</div><div class="state-badge-desc">Clear filters CTA</div></div>
+      <div class="state-badge s-error"><div class="state-badge-name">SEARCH_ERROR</div><div class="state-badge-desc">Error + retry + cached</div></div>
+      <div class="state-badge s-success"><div class="state-badge-name">EXHAUSTED</div><div class="state-badge-desc">"All N results loaded"</div></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="search-edges">
+    <div class="edge-list">
+      <div class="edge-item"><span class="edge-badge edge-perf">Race conditions</span><span class="edge-text"><strong>User types rapidly — response for "re" arrives after "react":</strong> use AbortController to cancel in-flight requests on each new query. TanStack Query handles this automatically.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-ux">Back button</span><span class="edge-text"><strong>User clicks result, goes back:</strong> URL params restore exact filter state. Scroll position restored to previously viewed item (save scrollY to sessionStorage keyed by search URL).</span></div>
+      <div class="edge-item"><span class="edge-badge edge-warn">Very long queries</span><span class="edge-text"><strong>URL length limit (2048 chars):</strong> if many filters are applied, URL can overflow. Warn at 80% of limit. Offer "Save search" to store in DB and replace with /saved/id.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-perf">1000+ results page</span><span class="edge-text"><strong>Rendering 50 result cards:</strong> use virtual scrolling (TanStack Virtual) for list view. Card view: windowed rendering. Never render more than 20 DOM nodes at once.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-ux">Mobile filter panel</span><span class="edge-text"><strong>Facets take up full screen on mobile:</strong> slide-up drawer for filters. Apply button required (don't auto-search on mobile filter change — too many network calls on slow connections).</span></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="search-code">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">TypeScript · React structure</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+      <div class="code-inner"><pre>
+<span class="cmt">// ─── File structure ────────────────────────────────────────────</span>
+<span class="cmt">// components/Search/</span>
+<span class="cmt">// ├── SearchPage.tsx          ← layout: sidebar filters + results</span>
+<span class="cmt">// ├── SearchInput.tsx         ← combobox with suggestions</span>
+<span class="cmt">// ├── FilterPanel.tsx         ← facet groups</span>
+<span class="cmt">// ├── FacetGroup.tsx          ← checkbox group per facet</span>
+<span class="cmt">// ├── RangeFacet.tsx          ← price slider</span>
+<span class="cmt">// ├── ActiveFilters.tsx       ← chips for applied filters</span>
+<span class="cmt">// ├── ResultsGrid.tsx         ← virtualized result cards</span>
+<span class="cmt">// ├── SortControls.tsx        ← sort select + view toggle</span>
+<span class="cmt">// ├── Pagination.tsx          ← page controls OR infinite sentinel</span>
+<span class="cmt">// ├── EmptyResults.tsx        ← no results states</span>
+<span class="cmt">// ├── useSearchParams.ts      ← nuqs URL state management</span>
+<span class="cmt">// ├── useSearch.ts            ← TanStack Query wrapper</span>
+<span class="cmt">// └── useVirtualResults.ts   ← TanStack Virtual integration</span>
+
+<span class="cmt">// ─── useSearch hook ────────────────────────────────────────────</span>
+<span class="kw">function</span> <span class="fn">useSearch</span>() {
+  <span class="kw">const</span> [isPending, startTransition] = <span class="fn">useTransition</span>();
+
+  <span class="cmt">// All state from URL — zero useState for search params</span>
+  <span class="kw">const</span> [q] = <span class="fn">useQueryState</span>(<span class="str">'q'</span>);
+  <span class="kw">const</span> [categories] = <span class="fn">useQueryState</span>(<span class="str">'category'</span>, <span class="fn">parseAsArrayOf</span>(<span class="fn">parseAsString</span>));
+  <span class="kw">const</span> [sort] = <span class="fn">useQueryState</span>(<span class="str">'sort'</span>, <span class="fn">parseAsString</span>.<span class="fn">withDefault</span>(<span class="str">'relevance'</span>));
+  <span class="kw">const</span> [page] = <span class="fn">useQueryState</span>(<span class="str">'page'</span>, <span class="fn">parseAsInteger</span>.<span class="fn">withDefault</span>(<span class="num">1</span>));
+
+  <span class="kw">const</span> searchParams = <span class="fn">useMemo</span>(() =&gt; ({
+    q: q ?? <span class="str">''</span>, categories: categories ?? [], sort, page
+  }), [q, categories, sort, page]);
+
+  <span class="kw">const</span> { data, isLoading, isFetching, isError, isPreviousData } = <span class="fn">useQuery</span>({
+    <span class="prop">queryKey</span>: [<span class="str">'search'</span>, searchParams],
+    <span class="prop">queryFn</span>: ({ signal }) =&gt; <span class="fn">searchAPI</span>(searchParams, signal),
+    <span class="prop">placeholderData</span>: <span class="fn">keepPreviousData</span>,
+    <span class="prop">staleTime</span>: <span class="num">30_000</span>,
+  });
+
+  <span class="kw">return</span> {
+    results: data?.items ?? [],
+    facets: data?.facets ?? [],
+    total: data?.total ?? <span class="num">0</span>,
+    isLoading: isLoading && !isPreviousData,
+    isFiltering: isFetching || isPending,
+    isError,
+    isEmpty: !isLoading && data?.total === <span class="num">0</span>,
+    hasActiveFilters: (categories?.length ?? <span class="num">0</span>) > <span class="num">0</span>,
+    startTransition,
+  };
+}
+
+<span class="cmt">// ─── SearchPage layout ─────────────────────────────────────────</span>
+<span class="kw">export function</span> <span class="fn">SearchPage</span>() {
+  <span class="kw">const</span> search = <span class="fn">useSearch</span>();
+
+  <span class="kw">return</span> (
+    &lt;<span class="tag">div</span> style={{ display: <span class="str">'grid'</span>, gridTemplateColumns: <span class="str">'280px 1fr'</span> }}&gt;
+      &lt;<span class="tag">FilterPanel</span>
+        <span class="attr">facets</span>={search.facets}
+        <span class="attr">isLoading</span>={search.isLoading}
+        <span class="attr">startTransition</span>={search.startTransition}
+      /&gt;
+      &lt;<span class="tag">main</span>&gt;
+        &lt;<span class="tag">SearchInput</span> /&gt;
+        &lt;<span class="tag">ActiveFilters</span> /&gt;
+        &lt;<span class="tag">SortControls</span> <span class="attr">total</span>={search.total} <span class="attr">isFiltering</span>={search.isFiltering} /&gt;
+        {search.isLoading ? &lt;<span class="tag">ResultsSkeleton</span> /&gt;
+          : search.isEmpty ? &lt;<span class="tag">EmptyResults</span> <span class="attr">hasFilters</span>={search.hasActiveFilters} /&gt;
+          : search.isError ? &lt;<span class="tag">SearchError</span> /&gt;
+          : &lt;<span class="tag">ResultsGrid</span> <span class="attr">items</span>={search.results} <span class="attr">isStale</span>={search.isFiltering} /&gt;
+        }
+        &lt;<span class="tag">Pagination</span> <span class="attr">total</span>={search.total} /&gt;
+      &lt;/<span class="tag">main</span>&gt;
+    &lt;/<span class="tag">div</span>&gt;
+  );
+}</pre></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     04 — USER DASHBOARD
+════════════════════════════════════════════════════ -->
+<div class="section" id="s-dashboard">
+  <div class="section-header">
+    <div class="section-num">Component 04</div>
+    <h1 class="section-title">User Dashboard</h1>
+    <p class="section-desc">Data visualization with real-time updates, full CRUD with optimistic mutations, and granular loading states per widget. Each panel is independently suspenseable and error-bounded.</p>
+    <div class="tag-row">
+      <span class="tag-pill tp-blue">React Suspense</span>
+      <span class="tag-pill tp-green">Optimistic updates</span>
+      <span class="tag-pill tp-amber">WebSocket</span>
+      <span class="tag-pill tp-purple">Error boundaries</span>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(event,'dashboard','machine')">State machine</button>
+    <button class="tab-btn" onclick="switchTab(event,'dashboard','data')">Data flow</button>
+    <button class="tab-btn" onclick="switchTab(event,'dashboard','errors')">Error handling</button>
+    <button class="tab-btn" onclick="switchTab(event,'dashboard','states')">UI states</button>
+    <button class="tab-btn" onclick="switchTab(event,'dashboard','edges')">Edge cases</button>
+    <button class="tab-btn" onclick="switchTab(event,'dashboard','code')">React structure</button>
+  </div>
+
+  <div class="tab-panel active" id="dashboard-machine">
+    <div class="grid2">
+      <div class="card">
+        <div class="card-header"><span class="card-header-title">Dashboard layout state machine</span></div>
+        <div class="card-body">
+          <div class="state-machine" style="font-size:10px;line-height:1.8;">
+<pre>
+<span class="sm-state">LOADING</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">ALL_PANELS_READY</span><span class="sm-arrow">]──→</span> <span class="sm-state">READY</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">SOME_PANELS_READY</span><span class="sm-arrow">]─→</span> <span class="sm-state">PARTIAL</span>
+
+<span class="sm-state">PARTIAL / READY</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">PANEL_ERROR</span><span class="sm-arrow">]───→</span> <span class="sm-state">PARTIAL</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">WS_CONNECTED</span><span class="sm-arrow">]──→</span> <span class="sm-state">LIVE</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">REFRESH</span><span class="sm-arrow">]────────→</span> <span class="sm-state">LOADING</span>
+
+<span class="sm-state">LIVE</span>  <span class="sm-comment">// WebSocket connected, real-time data</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">WS_MESSAGE</span><span class="sm-arrow">]────→</span> <span class="sm-state">LIVE</span>  <span class="sm-action">! updatePanel(delta)</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">WS_DISCONNECT</span><span class="sm-arrow">]──→</span> <span class="sm-state">STALE</span>  <span class="sm-action">! showReconnecting()</span>
+
+<span class="sm-state">STALE</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">WS_RECONNECT</span><span class="sm-arrow">]───→</span> <span class="sm-state">LIVE</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">TAB_FOCUS</span><span class="sm-arrow">]──────→</span> <span class="sm-state">LOADING</span>  <span class="sm-action">! refetchAll()</span>
+</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-header-title">CRUD mutation state machine</span></div>
+        <div class="card-body">
+          <div class="state-machine" style="font-size:10px;line-height:1.8;">
+<pre>
+<span class="sm-comment">// Per-row / per-item in list</span>
+
+<span class="sm-state">IDLE</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">EDIT_CLICK</span><span class="sm-arrow">]──→</span> <span class="sm-state">EDITING</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">DELETE_CLICK</span><span class="sm-arrow">]─→</span> <span class="sm-state">DELETE_CONFIRM</span>
+
+<span class="sm-state">EDITING</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">SAVE</span><span class="sm-arrow">]────────→</span> <span class="sm-state">OPTIMISTIC</span>  <span class="sm-action">! applyOptimistic()</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">CANCEL</span><span class="sm-arrow">]──────→</span> <span class="sm-state">IDLE</span>
+
+<span class="sm-state">OPTIMISTIC</span>  <span class="sm-comment">// Show new value immediately</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">API_SUCCESS</span><span class="sm-arrow">]─→</span> <span class="sm-state">IDLE</span>  <span class="sm-action">! confirmMutation()</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">API_ERROR</span><span class="sm-arrow">]───→</span> <span class="sm-state">ERROR</span>  <span class="sm-action">! rollback() ! toast(error)</span>
+
+<span class="sm-state">DELETE_CONFIRM</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">CONFIRM</span><span class="sm-arrow">]────→</span> <span class="sm-state">DELETING</span>  <span class="sm-action">! removeOptimistic()</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">CANCEL</span><span class="sm-arrow">]──────→</span> <span class="sm-state">IDLE</span>
+
+<span class="sm-state">DELETING</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">SUCCESS</span><span class="sm-arrow">]────→</span> <span class="sm-state">REMOVED</span>  <span class="sm-action">! invalidateQuery()</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">ERROR</span><span class="sm-arrow">]──────→</span> <span class="sm-state">IDLE</span>  <span class="sm-action">! restoreItem() ! toast(error)</span>
+</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="dashboard-data">
+    <div class="card">
+      <div class="card-header"><span class="card-header-title">Panel data flow (independent Suspense boundaries)</span></div>
+      <div class="card-body">
+        <div class="state-machine" style="font-size:10px;line-height:1.9;">
+<pre>
+<span class="sm-comment">// Each dashboard panel is independently fetched and bounded</span>
+
+&lt;<span class="sm-state">Dashboard</span>&gt;
+  &lt;<span class="sm-state">DashboardGrid</span>&gt;
+
+    &lt;<span class="sm-action">ErrorBoundary</span> fallback={&lt;PanelError /&gt;}&gt;
+      &lt;<span class="sm-action">Suspense</span> fallback={&lt;MetricCardSkeleton /&gt;}&gt;
+        &lt;<span class="sm-state">MetricsPanel</span> /&gt;     <span class="sm-comment">// fetches /api/metrics</span>
+      &lt;/<span class="sm-action">Suspense</span>&gt;
+    &lt;/<span class="sm-action">ErrorBoundary</span>&gt;
+
+    &lt;<span class="sm-action">ErrorBoundary</span> fallback={&lt;PanelError /&gt;}&gt;
+      &lt;<span class="sm-action">Suspense</span> fallback={&lt;ChartSkeleton /&gt;}&gt;
+        &lt;<span class="sm-state">ActivityChart</span> /&gt;   <span class="sm-comment">// fetches /api/activity</span>
+      &lt;/<span class="sm-action">Suspense</span>&gt;
+    &lt;/<span class="sm-action">ErrorBoundary</span>&gt;
+
+    &lt;<span class="sm-action">ErrorBoundary</span> fallback={&lt;PanelError /&gt;}&gt;
+      &lt;<span class="sm-action">Suspense</span> fallback={&lt;TableSkeleton /&gt;}&gt;
+        &lt;<span class="sm-state">ResourceTable</span> /&gt;   <span class="sm-comment">// fetches /api/resources + CRUD</span>
+      &lt;/<span class="sm-action">Suspense</span>&gt;
+    &lt;/<span class="sm-action">ErrorBoundary</span>&gt;
+
+  &lt;/<span class="sm-state">DashboardGrid</span>&gt;
+&lt;/<span class="sm-state">Dashboard</span>&gt;
+
+<span class="sm-comment">// Key: one panel crashing never kills the whole dashboard</span>
+<span class="sm-comment">// Each ErrorBoundary shows a contained "Panel unavailable" UI</span>
+<span class="sm-comment">// with a retry button that calls reset() on the boundary</span>
+</pre>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-header-title">Optimistic CRUD with TanStack Query</span></div>
+      <div class="card-body">
+        <div class="state-machine" style="font-size:10px;line-height:1.9;">
+<pre>
+<span class="kw">const</span> <span class="fn">updateMutation</span> = <span class="fn">useMutation</span>({
+  <span class="prop">mutationFn</span>: updateResource,
+
+  <span class="prop">onMutate</span>: <span class="kw">async</span> (newData) =&gt; {
+    <span class="cmt">// 1. Cancel any in-flight fetches for this query</span>
+    <span class="kw">await</span> queryClient.<span class="fn">cancelQueries</span>({ queryKey: [<span class="str">'resources'</span>] });
+    <span class="cmt">// 2. Snapshot previous value for rollback</span>
+    <span class="kw">const</span> prev = queryClient.<span class="fn">getQueryData</span>([<span class="str">'resources'</span>]);
+    <span class="cmt">// 3. Optimistically update cache immediately</span>
+    queryClient.<span class="fn">setQueryData</span>([<span class="str">'resources'</span>], <span class="fn">applyUpdate</span>(prev, newData));
+    <span class="kw">return</span> { prev };  <span class="cmt">// returned as context</span>
+  },
+
+  <span class="prop">onError</span>: (err, vars, context) =&gt; {
+    <span class="cmt">// 4. Rollback on error</span>
+    queryClient.<span class="fn">setQueryData</span>([<span class="str">'resources'</span>], context.prev);
+    <span class="fn">toast</span>.<span class="fn">error</span>(`Failed: ${err.message}`);
+  },
+
+  <span class="prop">onSettled</span>: () =&gt; {
+    <span class="cmt">// 5. Always refetch after mutation (success or error)</span>
+    queryClient.<span class="fn">invalidateQueries</span>({ queryKey: [<span class="str">'resources'</span>] });
+  },
+});
+</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="dashboard-errors">
+    <div class="edge-list">
+      <div class="edge-item"><span class="edge-badge edge-err">Panel crash</span><span class="edge-text"><strong>Viz library throws on malformed data:</strong> ErrorBoundary catches, shows "This panel is unavailable" with retry. Other panels continue working normally.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-warn">Optimistic rollback</span><span class="edge-text"><strong>CRUD update fails after optimistic apply:</strong> restore previous cache value, show toast "Update failed — changes reverted". Log original error for debugging.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-err">WebSocket disconnect</span><span class="edge-text"><strong>User loses connection mid-session:</strong> show "Reconnecting..." banner. Stop rendering "LIVE" indicator. On reconnect: fetch delta since last event ID (if API supports) or full refetch.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-perf">Stale data on tab refocus</span><span class="edge-text"><strong>User is away for 10 minutes, tabs back:</strong> TanStack Query refetchOnWindowFocus automatically. Show subtle "Refreshing data…" indicator, don't flash skeleton — use stale-while-revalidate.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-sec">Concurrent edits</span><span class="edge-text"><strong>Two users edit same row simultaneously:</strong> server returns 409 Conflict. Show "This item was updated by someone else" with diff. Let user choose to overwrite or discard.</span></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="dashboard-states">
+    <div class="states-grid">
+      <div class="state-badge s-loading"><div class="state-badge-name">INITIAL_LOAD</div><div class="state-badge-desc">Full skeleton grid</div></div>
+      <div class="state-badge s-partial"><div class="state-badge-name">PARTIAL</div><div class="state-badge-desc">Some panels ready, some loading</div></div>
+      <div class="state-badge s-idle"><div class="state-badge-name">READY</div><div class="state-badge-desc">All panels loaded, polling</div></div>
+      <div class="state-badge s-success"><div class="state-badge-name">LIVE</div><div class="state-badge-desc">WebSocket connected, live dot</div></div>
+      <div class="state-badge s-partial"><div class="state-badge-name">STALE</div><div class="state-badge-desc">WS dropped, banner shown</div></div>
+      <div class="state-badge s-loading"><div class="state-badge-name">REFRESHING</div><div class="state-badge-desc">Stale content visible + spinner</div></div>
+      <div class="state-badge s-idle"><div class="state-badge-name">EDITING</div><div class="state-badge-desc">Inline edit form visible</div></div>
+      <div class="state-badge s-loading"><div class="state-badge-name">SAVING</div><div class="state-badge-desc">Optimistic value shown</div></div>
+      <div class="state-badge s-error"><div class="state-badge-name">SAVE_ERROR</div><div class="state-badge-desc">Rolled back + toast</div></div>
+      <div class="state-badge s-error"><div class="state-badge-name">PANEL_ERROR</div><div class="state-badge-desc">Contained panel error UI</div></div>
+      <div class="state-badge s-empty"><div class="state-badge-name">EMPTY_TABLE</div><div class="state-badge-desc">Illustration + create CTA</div></div>
+      <div class="state-badge s-error"><div class="state-badge-name">DELETE_CONFIRM</div><div class="state-badge-desc">Inline confirmation dialog</div></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="dashboard-edges">
+    <div class="edge-list">
+      <div class="edge-item"><span class="edge-badge edge-perf">Chart with 10k data points</span><span class="edge-text"><strong>Line chart with 2yr of daily data:</strong> downsample client-side to max 365 points for display. Let user zoom/brush to see detail. Use canvas-based charting (Chart.js, Recharts area charts) not SVG for large datasets.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-warn">Empty dashboard first visit</span><span class="edge-text"><strong>New user, no data yet:</strong> show onboarding overlay with setup steps. Each panel shows contextual empty state ("Add your first resource to see analytics here").</span></div>
+      <div class="edge-item"><span class="edge-badge edge-err">Real-time data storm</span><span class="edge-text"><strong>WebSocket sends 100 messages/sec:</strong> batch UI updates with requestAnimationFrame. Throttle state updates to 60fps max. Never call setState on every WS message directly.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-ux">Date range selection</span><span class="edge-text"><strong>Charts update when date range changes:</strong> sync date range to URL. All panels respond to the same date range context. Date range picker has preset shortcuts (today, 7d, 30d, 90d, custom).</span></div>
+      <div class="edge-item"><span class="edge-badge edge-sec">Permission-gated panels</span><span class="edge-text"><strong>Viewer role sees dashboard but can't edit:</strong> disable all edit/delete buttons, hide them for read-only panels. Don't rely on button hiding alone — API also enforces permissions.</span></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="dashboard-code">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">TypeScript · React structure</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+      <div class="code-inner"><pre>
+<span class="cmt">// ─── File structure ────────────────────────────────────────────</span>
+<span class="cmt">// components/Dashboard/</span>
+<span class="cmt">// ├── DashboardPage.tsx         ← layout + WebSocket provider</span>
+<span class="cmt">// ├── DashboardGrid.tsx         ← responsive panel grid</span>
+<span class="cmt">// ├── panels/</span>
+<span class="cmt">// │   ├── MetricsPanel.tsx      ← KPI cards (suspense-ready)</span>
+<span class="cmt">// │   ├── ActivityChart.tsx     ← recharts line chart</span>
+<span class="cmt">// │   └── ResourceTable.tsx     ← CRUD table</span>
+<span class="cmt">// ├── table/</span>
+<span class="cmt">// │   ├── DataTable.tsx         ← headless table (TanStack Table)</span>
+<span class="cmt">// │   ├── EditableRow.tsx       ← inline edit row</span>
+<span class="cmt">// │   └── DeleteConfirm.tsx     ← inline confirmation</span>
+<span class="cmt">// ├── PanelWrapper.tsx          ← ErrorBoundary + Suspense + header</span>
+<span class="cmt">// ├── DashboardHeader.tsx       ← date range + refresh + live indicator</span>
+<span class="cmt">// ├── useDashboardRealtime.ts   ← WebSocket hook</span>
+<span class="cmt">// └── useResourceCRUD.ts        ← optimistic mutation hooks</span>
+
+<span class="cmt">// ─── PanelWrapper (reusable boundary) ─────────────────────────</span>
+<span class="kw">function</span> <span class="fn">PanelWrapper</span>({ title, children, skeleton }: <span class="type">PanelWrapperProps</span>) {
+  <span class="kw">return</span> (
+    &lt;<span class="tag">ErrorBoundary</span>
+      <span class="attr">fallback</span>={({ reset }) =&gt; (
+        &lt;<span class="tag">PanelError</span> <span class="attr">title</span>={title} <span class="attr">onRetry</span>={reset} /&gt;
+      )}
+    &gt;
+      &lt;<span class="tag">Suspense</span> <span class="attr">fallback</span>={skeleton ?? &lt;<span class="tag">GenericPanelSkeleton</span> /&gt;}&gt;
+        &lt;<span class="tag">div</span> <span class="attr">className</span>="panel"&gt;
+          &lt;<span class="tag">PanelHeader</span>&gt;{title}&lt;/<span class="tag">PanelHeader</span>&gt;
+          {children}
+        &lt;/<span class="tag">div</span>&gt;
+      &lt;/<span class="tag">Suspense</span>&gt;
+    &lt;/<span class="tag">ErrorBoundary</span>&gt;
+  );
+}
+
+<span class="cmt">// ─── WebSocket real-time hook ──────────────────────────────────</span>
+<span class="kw">function</span> <span class="fn">useDashboardRealtime</span>() {
+  <span class="kw">const</span> queryClient = <span class="fn">useQueryClient</span>();
+  <span class="kw">const</span> [status, setStatus] = <span class="fn">useState</span>&lt;<span class="str">'connecting'</span>|<span class="str">'live'</span>|<span class="str">'stale'</span>&gt;(<span class="str">'connecting'</span>);
+
+  <span class="fn">useEffect</span>(() =&gt; {
+    <span class="kw">const</span> ws = <span class="kw">new</span> <span class="type">WebSocket</span>(<span class="str">`${WS_URL}/dashboard`</span>);
+    <span class="kw">const</span> batchQueue: <span class="type">WSDelta</span>[] = [];
+    <span class="kw">let</span> rafId: <span class="type">number</span>;
+
+    <span class="kw">const</span> <span class="fn">flushBatch</span> = () =&gt; {
+      <span class="kw">if</span> (batchQueue.length === <span class="num">0</span>) <span class="kw">return</span>;
+      <span class="kw">const</span> deltas = [...batchQueue];
+      batchQueue.length = <span class="num">0</span>;
+      <span class="cmt">// Apply all deltas to query cache in one batch</span>
+      queryClient.<span class="fn">setQueriesData</span>({ queryKey: [<span class="str">'dashboard'</span>] },
+        (old: <span class="type">any</span>) =&gt; <span class="fn">applyDeltas</span>(old, deltas));
+    };
+
+    ws.onmessage = (event) =&gt; {
+      batchQueue.<span class="fn">push</span>(<span class="type">JSON</span>.<span class="fn">parse</span>(event.data));
+      <span class="fn">cancelAnimationFrame</span>(rafId);
+      rafId = <span class="fn">requestAnimationFrame</span>(flushBatch);  <span class="cmt">// max 60fps</span>
+    };
+
+    ws.onopen = () =&gt; <span class="fn">setStatus</span>(<span class="str">'live'</span>);
+    ws.onclose = () =&gt; <span class="fn">setStatus</span>(<span class="str">'stale'</span>);
+
+    <span class="kw">return</span> () =&gt; { ws.<span class="fn">close</span>(); <span class="fn">cancelAnimationFrame</span>(rafId); };
+  }, [queryClient]);
+
+  <span class="kw">return</span> { status };
+}</pre></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     05 — AUTH FLOW
+════════════════════════════════════════════════════ -->
+<div class="section" id="s-auth">
+  <div class="section-header">
+    <div class="section-num">Component 05</div>
+    <h1 class="section-title">Auth Flow</h1>
+    <p class="section-desc">Login, signup, and password reset with HTTP-only cookie tokens, PKCE OAuth, brute-force protection, and session management. Security is the primary design constraint.</p>
+    <div class="tag-row">
+      <span class="tag-pill tp-blue">HTTP-only cookies</span>
+      <span class="tag-pill tp-green">PKCE OAuth</span>
+      <span class="tag-pill tp-amber">Zod validation</span>
+      <span class="tag-pill tp-red">rate limiting</span>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(event,'auth','machine')">State machine</button>
+    <button class="tab-btn" onclick="switchTab(event,'auth','data')">Data flow</button>
+    <button class="tab-btn" onclick="switchTab(event,'auth','errors')">Error handling</button>
+    <button class="tab-btn" onclick="switchTab(event,'auth','states')">UI states</button>
+    <button class="tab-btn" onclick="switchTab(event,'auth','edges')">Edge cases</button>
+    <button class="tab-btn" onclick="switchTab(event,'auth','code')">React structure</button>
+  </div>
+
+  <div class="tab-panel active" id="auth-machine">
+    <div class="card">
+      <div class="card-header"><span class="card-header-title">Auth flow state machine</span></div>
+      <div class="card-body">
+        <div class="state-machine">
+<pre>
+<span class="sm-comment">┌─────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="sm-comment">│                    AUTH FLOW STATE MACHINE                                 │</span>
+<span class="sm-comment">└─────────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="sm-state">UNAUTHENTICATED</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">VISIT_LOGIN</span><span class="sm-arrow">]──────────→</span> <span class="sm-state">LOGIN_FORM</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">VISIT_SIGNUP</span><span class="sm-arrow">]─────────→</span> <span class="sm-state">SIGNUP_FORM</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">OAUTH_REDIRECT</span><span class="sm-arrow">]──────→</span> <span class="sm-state">OAUTH_CALLBACK</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">MAGIC_LINK_CLICK</span><span class="sm-arrow">]────→</span> <span class="sm-state">MAGIC_LINK_VERIFY</span>
+
+<span class="sm-state">LOGIN_FORM</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">SUBMIT</span><span class="sm-arrow">] <span class="sm-guard">[guard: valid]</span> ──→</span> <span class="sm-state">LOGIN_PENDING</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">FORGOT_PASSWORD</span><span class="sm-arrow">]───→</span> <span class="sm-state">RESET_REQUEST</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">GO_SIGNUP</span><span class="sm-arrow">]──────────→</span> <span class="sm-state">SIGNUP_FORM</span>
+
+<span class="sm-state">LOGIN_PENDING</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">SUCCESS</span><span class="sm-arrow">]────────────→</span> <span class="sm-state">AUTHENTICATED</span>  <span class="sm-action">! setCookie() ! redirect(returnTo)</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">WRONG_CREDENTIALS</span><span class="sm-arrow">]──→</span> <span class="sm-state">LOGIN_FORM</span>      <span class="sm-action">! showError() ! incrementAttempts()</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">RATE_LIMITED</span><span class="sm-arrow">]──────→</span> <span class="sm-state">LOCKED_OUT</span>      <span class="sm-action">! showLockout(remainingMs)</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">MFA_REQUIRED</span><span class="sm-arrow">]──────→</span> <span class="sm-state">MFA_CHALLENGE</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">NETWORK_ERROR</span><span class="sm-arrow">]─────→</span> <span class="sm-state">LOGIN_FORM</span>      <span class="sm-action">! showNetworkError()</span>
+
+<span class="sm-state">MFA_CHALLENGE</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">CODE_SUBMIT</span><span class="sm-arrow">]────────→</span> <span class="sm-state">MFA_VERIFY</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">RESEND</span><span class="sm-arrow">]────────────→</span> <span class="sm-state">MFA_CHALLENGE</span>   <span class="sm-action">! cooldown(60s)</span>
+
+<span class="sm-state">MFA_VERIFY</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">SUCCESS</span><span class="sm-arrow">]────────────→</span> <span class="sm-state">AUTHENTICATED</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">INVALID_CODE</span><span class="sm-arrow">]──────→</span> <span class="sm-state">MFA_CHALLENGE</span>   <span class="sm-action">! showError()</span>
+
+<span class="sm-state">SIGNUP_FORM</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">SUBMIT</span><span class="sm-arrow">] <span class="sm-guard">[valid]</span> ────→</span> <span class="sm-state">SIGNUP_PENDING</span>
+
+<span class="sm-state">SIGNUP_PENDING</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">SUCCESS</span><span class="sm-arrow">]────────────→</span> <span class="sm-state">EMAIL_VERIFY_SENT</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">EMAIL_TAKEN</span><span class="sm-arrow">]────────→</span> <span class="sm-state">SIGNUP_FORM</span>      <span class="sm-action">! setError('email', msg)</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">RATE_LIMITED</span><span class="sm-arrow">]──────→</span> <span class="sm-state">SIGNUP_FORM</span>      <span class="sm-action">! showRateLimit()</span>
+
+<span class="sm-state">EMAIL_VERIFY_SENT</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">RESEND</span><span class="sm-arrow">]────────────→</span> <span class="sm-state">EMAIL_VERIFY_SENT</span> <span class="sm-action">! cooldown(60s)</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">VERIFIED</span><span class="sm-arrow">]──────────→</span> <span class="sm-state">AUTHENTICATED</span>
+
+<span class="sm-state">RESET_REQUEST</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">SUBMIT</span><span class="sm-arrow">]────────────→</span> <span class="sm-state">RESET_SENT</span>  <span class="sm-action">! alwaysShowSuccess() // prevent email enumeration</span>
+
+<span class="sm-state">RESET_FORM</span>  <span class="sm-comment">// User lands here from email link with token</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">INVALID_TOKEN</span><span class="sm-arrow">]──────→</span> <span class="sm-state">TOKEN_EXPIRED</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">SUBMIT</span><span class="sm-arrow">]────────────→</span> <span class="sm-state">RESET_PENDING</span>
+
+<span class="sm-state">RESET_PENDING</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">SUCCESS</span><span class="sm-arrow">]────────────→</span> <span class="sm-state">RESET_COMPLETE</span>  <span class="sm-action">! invalidateAllSessions()</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">TOKEN_EXPIRED</span><span class="sm-arrow">]──────→</span> <span class="sm-state">TOKEN_EXPIRED</span>
+
+<span class="sm-state">AUTHENTICATED</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">SESSION_EXPIRE</span><span class="sm-arrow">]─────→</span> <span class="sm-state">SESSION_EXPIRED</span>  <span class="sm-action">! silent refresh via /api/refresh</span>
+  <span class="sm-arrow">├──[</span><span class="sm-event">REFRESH_FAIL</span><span class="sm-arrow">]──────→</span> <span class="sm-state">UNAUTHENTICATED</span> <span class="sm-action">! saveReturnUrl() ! redirectToLogin()</span>
+  <span class="sm-arrow">└──[</span><span class="sm-event">LOGOUT</span><span class="sm-arrow">]────────────→</span> <span class="sm-state">UNAUTHENTICATED</span> <span class="sm-action">! clearCookie() ! clearQueryCache()</span>
+</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="auth-data">
+    <div class="grid2">
+      <div class="card">
+        <div class="card-header"><span class="card-header-title">Token strategy</span></div>
+        <div class="card-body">
+          <div class="state-machine" style="font-size:10px;line-height:1.9;">
+<pre>
+<span class="sm-action">Access token:</span>
+  HTTP-only cookie, Secure, SameSite=Lax
+  Short-lived: 15 minutes
+  Never accessible to JavaScript
+  Set by server on /api/auth/login
+
+<span class="sm-action">Refresh token:</span>
+  HTTP-only cookie, Secure, SameSite=Strict
+  Long-lived: 30 days
+  Stored separately from access token
+  Rotated on every use (rotation strategy)
+
+<span class="sm-action">Silent refresh:</span>
+  React Query refetchInterval: 14 min
+  Calls GET /api/auth/refresh
+  Server rotates refresh token
+  Returns new access token cookie
+  Invisible to user
+
+<span class="sm-comment">// What NOT to do:</span>
+<span class="sm-error">✗ localStorage.setItem('token', jwt)</span>
+<span class="sm-error">✗ sessionStorage for sensitive tokens</span>
+<span class="sm-error">✗ Embed token in URL params</span>
+<span class="sm-error">✗ Long-lived access tokens</span>
+</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-header-title">PKCE OAuth flow</span></div>
+        <div class="card-body">
+          <div class="state-machine" style="font-size:10px;line-height:1.9;">
+<pre>
+<span class="sm-comment">// Google / GitHub SSO with PKCE</span>
+
+1. User clicks "Continue with Google"
+
+2. Client generates:
+   <span class="sm-action">codeVerifier</span> = crypto.randomUUID() + ...
+   <span class="sm-action">codeChallenge</span> = base64url(sha256(verifier))
+   <span class="sm-action">state</span> = crypto.randomUUID()  <span class="sm-comment">// CSRF</span>
+
+3. Store { state, codeVerifier } in
+   <span class="sm-action">sessionStorage</span>  <span class="sm-comment">// survives redirect</span>
+
+4. Redirect to Google with:
+   ?response_type=code
+   &code_challenge={codeChallenge}
+   &code_challenge_method=S256
+   &state={state}
+
+5. Google redirects back with ?code&state
+6. Verify state matches sessionStorage
+7. POST /api/auth/oauth { code, verifier }
+8. Server exchanges code for tokens
+9. Server sets HTTP-only cookies
+10. Clear sessionStorage, redirect app
+</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="auth-errors">
+    <div class="edge-list">
+      <div class="edge-item"><span class="edge-badge edge-sec">Email enumeration</span><span class="edge-text"><strong>Password reset endpoint MUST always return the same message</strong> whether email exists or not. "If an account with that email exists, we sent a reset link." Timing must also match — add artificial delay if email not found.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-sec">Brute force</span><span class="edge-text"><strong>Progressive lockout:</strong> 5 attempts → 15min lockout. Show countdown timer. After lockout, enforce on server (not just client). Log IP + fingerprint for abuse detection.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-err">Expired reset token</span><span class="edge-text"><strong>User clicks old reset link:</strong> detect on page load (verify token before showing form). Show "This link has expired. Request a new one." Don't show the password form at all — confusing to fill then fail.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-sec">CSRF on OAuth state</span><span class="edge-text"><strong>Attacker substitutes state param:</strong> always verify state matches exactly what was stored in sessionStorage before processing callback. Mismatch = abort + log.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-warn">Silent refresh failure</span><span class="edge-text"><strong>Refresh token also expired:</strong> don't loop endlessly. After 3 silent refresh failures, redirect to login with ?sessionExpired=true to show helpful context message.</span></div>
+      <div class="edge-item"><span class="edge-badge edge-ux">Already logged in</span><span class="edge-text"><strong>Authenticated user visits /login:</strong> redirect to dashboard or ?returnTo immediately. Don't show the login form to an authenticated user.</span></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="auth-states">
+    <div class="states-grid">
+      <div class="state-badge s-idle"><div class="state-badge-name">LOGIN_IDLE</div><div class="state-badge-desc">Form ready, empty</div></div>
+      <div class="state-badge s-loading"><div class="state-badge-name">LOGIN_PENDING</div><div class="state-badge-desc">Submit button spinner, fields locked</div></div>
+      <div class="state-badge s-error"><div class="state-badge-name">LOGIN_ERROR</div><div class="state-badge-desc">Inline error, form still editable</div></div>
+      <div class="state-badge s-error"><div class="state-badge-name">LOCKED_OUT</div><div class="state-badge-desc">Countdown timer, all inputs disabled</div></div>
+      <div class="state-badge s-idle"><div class="state-badge-name">MFA_CHALLENGE</div><div class="state-badge-desc">OTP input focused</div></div>
+      <div class="state-badge s-loading"><div class="state-badge-name">OAUTH_LOADING</div><div class="state-badge-desc">Redirect in progress, full-page spinner</div></div>
+      <div class="state-badge s-loading"><div class="state-badge-name">OAUTH_CALLBACK</div><span class="state-badge-desc">Processing redirect, verifying state</span></div>
+      <div class="state-badge s-success"><div class="state-badge-name">EMAIL_SENT</div><div class="state-badge-desc">Check your inbox UI</div></div>
+      <div class="state-badge s-error"><div class="state-badge-name">TOKEN_EXPIRED</div><div class="state-badge-desc">Request new link CTA</div></div>
+      <div class="state-badge s-success"><div class="state-badge-name">RESET_COMPLETE</div><div class="state-badge-desc">Password changed, redirect in 3s</div></div>
+      <div class="state-badge s-partial"><div class="state-badge-name">SESSION_REFRESH</div><div class="state-badge-desc">Silent background, user unaware</div></div>
+      <div class="state-badge s-error"><div class="state-badge-name">SESSION_EXPIRED</div><div class="state-badge-desc">Redirect to login, context preserved</div></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="auth-code">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">TypeScript · React structure</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+      <div class="code-inner"><pre>
+<span class="cmt">// ─── File structure ────────────────────────────────────────────</span>
+<span class="cmt">// components/Auth/</span>
+<span class="cmt">// ├── AuthProvider.tsx          ← session context + silent refresh</span>
+<span class="cmt">// ├── LoginForm.tsx</span>
+<span class="cmt">// ├── SignupForm.tsx</span>
+<span class="cmt">// ├── ResetRequest.tsx          ← email input for reset</span>
+<span class="cmt">// ├── ResetForm.tsx             ← new password (token from URL)</span>
+<span class="cmt">// ├── MFAChallenge.tsx          ← OTP input</span>
+<span class="cmt">// ├── OAuthButtons.tsx          ← Google, GitHub SSO</span>
+<span class="cmt">// ├── OAuthCallback.tsx         ← handles ?code&state redirect</span>
+<span class="cmt">// ├── ProtectedRoute.tsx        ← redirect gate</span>
+<span class="cmt">// ├── useAuth.ts                ← session state + actions</span>
+<span class="cmt">// ├── useAuthForm.ts            ← RHF + Zod + mutation wrapper</span>
+<span class="cmt">// └── schemas.ts                ← Zod schemas for all forms</span>
+
+<span class="cmt">// ─── AuthProvider ──────────────────────────────────────────────</span>
+<span class="kw">function</span> <span class="fn">AuthProvider</span>({ children }) {
+  <span class="kw">const</span> { data: session, status } = <span class="fn">useQuery</span>({
+    <span class="prop">queryKey</span>: [<span class="str">'session'</span>],
+    <span class="prop">queryFn</span>: <span class="fn">fetchSession</span>,        <span class="cmt">// GET /api/auth/me</span>
+    <span class="prop">retry</span>: <span class="bool">false</span>,
+    <span class="prop">staleTime</span>: <span class="num">14</span> * <span class="num">60</span> * <span class="num">1000</span>,    <span class="cmt">// 14 min</span>
+    <span class="prop">refetchInterval</span>: <span class="num">14</span> * <span class="num">60</span> * <span class="num">1000</span>, <span class="cmt">// silent refresh</span>
+    <span class="prop">refetchIntervalInBackground</span>: <span class="bool">false</span>,
+  });
+
+  <span class="kw">const</span> <span class="fn">logout</span> = <span class="kw">async</span> () =&gt; {
+    <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'/api/auth/logout'</span>, { method: <span class="str">'POST'</span> });
+    queryClient.<span class="fn">clear</span>();      <span class="cmt">// clear ALL cached user data</span>
+    <span class="fn">router</span>.<span class="fn">navigate</span>(<span class="str">'/login'</span>);
+  };
+
+  <span class="kw">return</span> (
+    &lt;<span class="tag">AuthContext.Provider</span> <span class="attr">value</span>={{ session, status, logout }}&gt;
+      {children}
+    &lt;/<span class="tag">AuthContext.Provider</span>&gt;
+  );
+}
+
+<span class="cmt">// ─── ProtectedRoute ────────────────────────────────────────────</span>
+<span class="kw">function</span> <span class="fn">ProtectedRoute</span>({ children, requiredRole }: <span class="type">ProtectedRouteProps</span>) {
+  <span class="kw">const</span> { session, status } = <span class="fn">useAuth</span>();
+  <span class="kw">const</span> location = <span class="fn">useLocation</span>();
+
+  <span class="kw">if</span> (status === <span class="str">'pending'</span>) <span class="kw">return</span> &lt;<span class="tag">AuthLoadingSpinner</span> /&gt;;
+
+  <span class="kw">if</span> (!session) {
+    <span class="cmt">// Save intended destination for post-login redirect</span>
+    <span class="kw">return</span> &lt;<span class="tag">Navigate</span> <span class="attr">to</span>={`/login?returnTo=${encodeURIComponent(location.pathname)}`} <span class="attr">replace</span> /&gt;;
+  }
+
+  <span class="kw">if</span> (requiredRole && !session.roles.<span class="fn">includes</span>(requiredRole)) {
+    <span class="kw">return</span> &lt;<span class="tag">Navigate</span> <span class="attr">to</span>="/unauthorized" <span class="attr">replace</span> /&gt;;
+  }
+
+  <span class="kw">return</span> &lt;&gt;{children}&lt;/&gt;;
+}
+
+<span class="cmt">// ─── useAuthForm hook ──────────────────────────────────────────</span>
+<span class="kw">function</span> <span class="fn">useAuthForm</span>&lt;<span class="type">T</span> <span class="kw">extends</span> <span class="type">FieldValues</span>&gt;(
+  schema: <span class="type">ZodSchema</span>&lt;<span class="type">T</span>&gt;,
+  mutationFn: (<span class="prop">data</span>: <span class="type">T</span>) =&gt; <span class="type">Promise</span>&lt;<span class="type">AuthResponse</span>&gt;,
+  onSuccess: (<span class="prop">response</span>: <span class="type">AuthResponse</span>) =&gt; <span class="kw">void</span>
+) {
+  <span class="kw">const</span> form = <span class="fn">useForm</span>&lt;<span class="type">T</span>&gt;({
+    <span class="prop">resolver</span>: <span class="fn">zodResolver</span>(schema),
+    <span class="prop">mode</span>: <span class="str">'onBlur'</span>,
+  });
+
+  <span class="kw">const</span> mutation = <span class="fn">useMutation</span>({
+    mutationFn,
+    <span class="prop">onSuccess</span>: onSuccess,
+    <span class="prop">onError</span>: (err: <span class="type">AuthError</span>) =&gt; {
+      <span class="kw">if</span> (err.code === <span class="str">'FIELD_ERRORS'</span>) {
+        <span class="type">Object</span>.<span class="fn">entries</span>(err.fields).<span class="fn">forEach</span>(([k, v]) =&gt;
+          form.<span class="fn">setError</span>(k <span class="kw">as</span> <span class="kw">Path</span>&lt;<span class="type">T</span>&gt;, { message: v })
+        );
+      }
+      <span class="cmt">// Rate limit, network errors handled by form state</span>
+    },
+  });
+
+  <span class="kw">return</span> {
+    form,
+    onSubmit: form.<span class="fn">handleSubmit</span>(mutation.mutate),
+    isPending: mutation.isPending,
+    isRateLimited: mutation.error?.code === <span class="str">'RATE_LIMITED'</span>,
+    retryAfter: mutation.error?.retryAfter,
+  };
+}</pre></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function switchTab(e, component, panel) {
+  const section = document.getElementById('s-' + component);
+  section.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  section.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  document.getElementById(component + '-' + panel).classList.add('active');
+}
+
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied!';
+    setTimeout(() => btn.textContent = 'copy', 2000);
+  });
+}
+</script>
+</body>
+</html>
